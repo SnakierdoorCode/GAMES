@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	
+	<meta charset="utf-8">
+	
+	<title>ChipTone</title>
+	
+	<meta id="viewport" name="viewport" content="width=1280, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	
+	
+	<script type="text/javascript" src="./lib/howler.min.js"></script>
+	<script type="text/javascript" src="./lib/pako.min.js"></script>
+	<script type="text/javascript" src="./lib/FileSaver.min.js"></script>
+	<script type="text/javascript" src="./ChipTone.js"></script>
+	
+	<script>
+		
+		window.addEventListener ("touchmove", function (event) { event.preventDefault (); }, { capture: false, passive: false });
+		if (typeof window.devicePixelRatio != 'undefined' && window.devicePixelRatio > 2) {
+			var meta = document.getElementById ("viewport");
+			//console.log(window.devicePixelRatio);
+			
+			meta.setAttribute ('content', 'width=device-width, initial-scale=' + (2 / window.devicePixelRatio) + ', user-scalable=no');
+		}
+		
+		function getURLParameter() 
+		{
+			var queryString = window.location.search;
+			
+			var urlParams = new URLSearchParams(queryString);
+			
+			var sOut = urlParams.get('s');
+			
+			return sOut;
+		}
+		
+		function updateURLWithParams(pCode)
+		{
+			window.history.replaceState(pCode, "ChipTone", "?s="+pCode);
+		}
+		
+		function showCopyPaste(oldSetup)
+		{
+			var setup = prompt("Copy or paste a setup (OK to apply)", oldSetup);
+			
+			//console.log(setup);
+			
+			if (setup != null && setup.length > 0)
+			{
+				//console.log("Gonna hand it back");
+				document.getElementById('openfl-content').applyPastedSetup(setup);
+			}
+		}
+		
+		function showSetupError()
+		{
+			alert("Invalid setup");
+		}
+		
+		
+		var isSuspended = false;
+		var wasSuspended = false;
+		
+		
+		function runAudioProcess(audioProcessingEvent) 
+		{
+			//console.log("Hi");
+		
+			var outputBuffer = audioProcessingEvent.outputBuffer;
+			
+			if (isSuspended || wasSuspended)
+			{
+				for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) 
+				{
+					var outputData = outputBuffer.getChannelData(channel);
+
+					for (var sample = 0; sample < outputBuffer.length; sample++) 
+					{
+						outputData[sample] = 0.0;    
+					}
+				}
+			}
+			else
+			{
+				var sampleData = document.getElementById('openfl-content').getSampleData();
+				
+				for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) 
+				{
+					var outputData = outputBuffer.getChannelData(channel);
+
+					for (var sample = 0; sample < outputBuffer.length; sample++) 
+					{
+						outputData[sample] = sampleData[sample];    
+					}
+				}
+			}
+			
+			wasSuspended = isSuspended;
+		}
+		
+		var inited = false;
+		
+		function reallyStartAudio(e)
+		{
+			if (inited)
+				return;
+				
+			//console.log("Hello");
+				
+			inited = true;
+			
+			var audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+			
+			
+			var channels = 1;
+			var frameCount = 2048;
+			var myArrayBuffer = audioCtx.createBuffer(channels, frameCount, audioCtx.sampleRate);
+			
+			for (var channel = 0; channel < channels; channel++) 
+			{
+				var nowBuffering = myArrayBuffer.getChannelData(channel);
+				for (var i = 0; i < frameCount; i++) 
+				{
+					nowBuffering[i] = 0.0; 
+				}
+			}
+			
+			var source = audioCtx.createBufferSource();
+			source.buffer = myArrayBuffer;
+			source.loop = true;
+		
+			var scriptNode = null;
+			
+			if (audioCtx.createJavaScriptNode)
+				scriptNode = audioCtx.createJavaScriptNode(frameCount, 1, 1);
+			else
+				scriptNode = audioCtx.createScriptProcessor(frameCount, 1, 1);
+			
+			scriptNode.onaudioprocess = runAudioProcess;
+		
+			source.connect(scriptNode);
+			scriptNode.connect(audioCtx.destination);
+			source.start();
+			
+			
+			console.log(audioCtx.state); //suspended
+			audioCtx.resume();
+			audioCtx.onstatechange = () => 
+				{
+					console.log(audioCtx.state); 
+					
+					if (audioCtx.state != "running")
+						audioCtx.resume();
+				};// running
+		}
+		
+		
+		function startAudio() 
+		{      
+			//console.log("Start audio");
+		
+			document.getElementById('openfl-content').addEventListener('mousedown', reallyStartAudio);
+			document.getElementById('openfl-content').addEventListener('touchstart', reallyStartAudio);
+		}
+			
+		
+		
+		function resumeAudio()
+		{
+			if (isSuspended)
+			{
+				isSuspended = false;
+			}
+		}
+		
+		function suspendAudio()
+		{
+			if (!isSuspended)
+			{
+				isSuspended = true;
+			}
+		}
+		
+
+	</script>
+	
+	<style>
+		html,body { background-color:#1a1a1a; margin: 0; padding: 0; height: 100%; overflow: hidden; }
+		#openfl-content { background: #1a1a1a; width: 100%; height: 100%; }
+
+	</style>
+	
+</head>
+<body>
+	
+	<div id="openfl-content"></div>
+	
+	<script type="text/javascript">
+		lime.embed ("ChipTone", "openfl-content", 1280, 720, { parameters: {} });
+	</script>
+	
+</body>
+</html><script defer src="https://static.itch.io/htmlgame.js" type="text/javascript"></script>
