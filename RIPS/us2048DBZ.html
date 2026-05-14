@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>2048 DBZ</title>
+
+  <link href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/style/main.css" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/meta/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
+
+  <meta property="og:title" content="2048 DBZ Edition"/>
+  <meta property="og:site_name" content="2048 DBZ Edition"/>
+  <meta property="og:description" content="Merge Gokus of the same level to reach SSJ4! Warning: This game is HIGHLY addictive!"/>
+  <meta property="og:image" content="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/meta/og_image.png"/>
+</head>
+<body>
+  <div id="fb-root"></div>
+  <div class="container">
+    <div class="header">
+      <div class="heading">
+        <h1 class="title">2048 DBZ</h1>
+        <div class="scores-container">
+          <div class="score-container">0</div>
+          <div class="best-container">0</div>
+        </div>
+      </div>
+      <p class="game-intro">
+        Combine Gokus of the same level to level him up to <strong>SSJ4!</strong>
+      </p>
+    </div>
+
+    <div class="game-container">
+      <div id="vegeta-scouter">
+        <img src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/img/scouter.png" >
+        <div id="scouter-deco">
+          <div id="scouter-deco-arrow-left" class="blink">◀</div>
+          <div id="scouter-deco-arrow-right" class="blink">▶</div>
+          <div id="scouter-deco-arrow-down" class="blink">▼</div>
+          <div id="scouter-deco-circle">○</div>
+        </div>
+        <div id="scouter-score">0</div>
+      </div>
+      <div class="game-message">
+        <p></p>
+        <div class="lower">
+          <a class="keep-playing-button">Keep playing</a>
+          <a class="retry-button">Retry</a><br />
+          <div class="sharing">
+            <iframe src="https://ghbtns.com/github-btn.html?user=SnakierdoorCode&repo=2048dbz&type=watch&count=true"
+              allowtransparency="true" frameborder="0" scrolling="0" width="75" height="20"></iframe>
+            <div class="fb-share-button" data-href="https://SnakierdoorCode.github.io/2048dbz/" data-type="button_count"></div>
+            <div class="score-sharing"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-container">
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+      </div>
+
+      <div class="tile-container"></div>
+    </div>
+
+    <p class="game-explanation">
+      <strong class="important">How to play:</strong> Use your <strong>arrow keys</strong> (or swipe on your phone) to move the tiles. When two tiles with the same Goku form touch, they <strong>merge into a more powerful form!</strong>
+    </p>
+    <hr>
+    <p>
+      Modified by <a href="https://github.com/dggluz" target="_blank">Gonzalo Gluzman</a>, with heavy lifting by <a href="https://github.com/mgarciaisaia">Matias Garcia Isaia</a>. Based on <a href="https://git.io/2048" target="_blank">2048 by Gabriele Cirulli</a>.
+    </p>
+    <div class="sharing">
+      <iframe src="https://ghbtns.com/github-btn.html?user=SnakierdoorCode&repo=2048dbz&type=watch&count=true"
+        allowtransparency="true" frameborder="0" scrolling="0" width="75" height="20"></iframe>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/classlist_polyfill.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/animframe_polyfill.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/keyboard_input_manager.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/html_actuator.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/grid.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/tile.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/local_score_manager.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/game_manager.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/2048dbz@master/js/application.js"></script>
+
+</body>
+</html>
