@@ -1,9 +1,15 @@
+<!--Credit to Musashi for ripping-->
+<!--Check out The Universal Stash-->
+
 <!DOCTYPE html>
 <html lang="en-us">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL | Baldi's Fun New School</title>
+    <title>Unity WebGL Player</title>
+    
+    <base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/Games@main/RIPS/BALDISFUNSCHOOL/">
+
     <style>
         html, body { 
             background: #000; 
@@ -29,32 +35,31 @@
         #loading-overlay { 
             position: absolute; 
             color: white; 
-            font-family: sans-serif; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
             text-align: center; 
             z-index: 10;
         }
         #ripped-text {
             color: #ff0000;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255,0,0,0.5);
         }
-        #bar-bg { width: 300px; background: #333; height: 10px; border-radius: 5px; margin-top: 10px; }
-        #bar-fill { width: 0%; height: 100%; background: #4CAF50; border-radius: 5px; }
-        
-        /* Bottom Right Tag */
+        #status { font-size: 14px; color: #ccc; margin-bottom: 5px; }
+        #bar-bg { width: 300px; background: #333; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #444; }
+        #bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 6px; transition: width 0.3s; }
         #credit-tag {
             position: fixed;
             bottom: 10px;
-            right: 10px;
-            color: rgba(255, 0, 0, 0.6);
+            right: 15px;
+            color: rgba(255, 0, 0, 0.5);
             font-family: sans-serif;
             font-size: 12px;
             z-index: 20;
             pointer-events: none;
-            user-select: none;
         }
     </style>
 </head>
@@ -64,38 +69,50 @@
         <canvas id="unity-canvas"></canvas>
         <div id="loading-overlay">
             <div id="ripped-text">Ripped by Musashi</div>
-            <div id="status">INITIATING DOWNLOAD...</div>
+            <div id="status">CONNECTING TO CDN...</div>
             <div id="bar-bg"><div id="bar-fill"></div></div>
         </div>
     </div>
 
     <div id="credit-tag">Ripped by Musashi</div>
 
-    <script src="Build/BFNSPUE Alpha 6 Part 2b WebGL.loader.js"></script>
-
     <script>
+        const GAME_CONFIG = {
+            // Name of the files inside the RIPS/BALDISFUNSCHOOL/Build folder
+            fileName: "BFNSPUE Alpha 6 Part 2b WebGL",
+            
+            dataParts: 8,
+            wasmParts: 2,
+            buildPath: "Build/", 
+            
+            productName: "Baldi's Fun New School Plus Ultimate Edition",
+            companyName: "JohnsterSpaceGames",
+            version: "0.2.5b",
+            totalSizeEstimate: 250000000
+        };
+
+        const loaderScript = document.createElement("script");
+        loaderScript.src = `${GAME_CONFIG.buildPath}${GAME_CONFIG.fileName}.loader.js`;
+        document.body.appendChild(loaderScript);
+
         const canvas = document.querySelector("#unity-canvas");
         const statusText = document.querySelector("#status");
         const barFill = document.querySelector("#bar-fill");
         const loadingOverlay = document.querySelector("#loading-overlay");
 
-        const buildPath = "Build/";
-        const fileName = "BFNSPUE Alpha 6 Part 2b WebGL";
-        const DATA_PARTS = 8; 
-        const WASM_PARTS = 2;
-
-        let totalBytes = 250000000; // Estimated total size
         let loadedBytes = 0;
 
         function getPartsList(baseName, count) {
             const list = [];
-            for (let i = 1; i <= count; i++) list.push(`${baseName}.part${i}`);
+            for (let i = 1; i <= count; i++) {
+                list.push(`${baseName}.part${i}`);
+            }
             return list;
         }
 
         async function fetchWithProgress(url) {
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`Missing: ${url}`);
+            if (!response.ok) throw new Error(`CDN Error: ${url}`);
             const reader = response.body.getReader();
             const chunks = [];
             let received = 0;
@@ -105,8 +122,8 @@
                 chunks.push(value);
                 received += value.length;
                 loadedBytes += value.length;
-                const percent = ((loadedBytes / totalBytes) * 100).toFixed(1);
-                statusText.textContent = `Downloading: ${percent}%`;
+                const percent = Math.min(((loadedBytes / GAME_CONFIG.totalSizeEstimate) * 100), 100).toFixed(1);
+                statusText.textContent = `Downloading Assets: ${percent}%`;
                 barFill.style.width = percent + "%";
             }
             return new Uint8Array(await new Blob(chunks).arrayBuffer());
@@ -118,11 +135,11 @@
             return URL.createObjectURL(new Blob(buffers, { type: mimeType }));
         }
 
-        (async () => {
+        loaderScript.onload = async () => {
             try {
-                const dataFiles = getPartsList(`${buildPath}${fileName}.data`, DATA_PARTS);
-                const wasmFiles = getPartsList(`${buildPath}${fileName}.wasm`, WASM_PARTS);
-                const frameworkFile = `${buildPath}${fileName}.framework.js`;
+                const dataFiles = getPartsList(`${GAME_CONFIG.buildPath}${GAME_CONFIG.fileName}.data`, GAME_CONFIG.dataParts);
+                const wasmFiles = getPartsList(`${GAME_CONFIG.buildPath}${GAME_CONFIG.fileName}.wasm`, GAME_CONFIG.wasmParts);
+                const frameworkFile = `${GAME_CONFIG.buildPath}${GAME_CONFIG.fileName}.framework.js`;
 
                 const [dataUrl, wasmUrl, frameworkUrl] = await Promise.all([
                     mergeAndCreateUrl(dataFiles, "application/octet-stream"),
@@ -130,29 +147,30 @@
                     mergeAndCreateUrl([frameworkFile], "application/javascript")
                 ]);
 
-                const config = {
+                const baseUrl = document.querySelector('base').href;
+
+                const unityConfig = {
                     dataUrl: dataUrl,
                     frameworkUrl: frameworkUrl,
                     codeUrl: wasmUrl,
-                    streamingAssetsUrl: "StreamingAssets",
-                    companyName: "JohnsterSpaceGames",
-                    productName: "Baldi's Fun New School Plus Ultimate Edition",
-                    productVersion: "0.2.5b",
+                    streamingAssetsUrl: baseUrl + "StreamingAssets",
+                    companyName: GAME_CONFIG.companyName,
+                    productName: GAME_CONFIG.productName,
+                    productVersion: GAME_CONFIG.version,
                     matchWebGLToCanvasSize: true, 
                     devicePixelRatio: window.devicePixelRatio || 1,
                 };
 
-                createUnityInstance(canvas, config, (progress) => {
-                    if (progress === 1) statusText.textContent = "Launching...";
+                createUnityInstance(canvas, unityConfig, (progress) => {
+                    if (progress === 1) statusText.textContent = "Booting Engine...";
                 }).then((instance) => {
-
                     loadingOverlay.remove();
                 });
 
             } catch (err) {
                 statusText.innerHTML = `<span style="color:red">ERROR: ${err.message}</span>`;
             }
-        })();
+        };
     </script>
 </body>
 </html>
