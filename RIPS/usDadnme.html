@@ -1,0 +1,76 @@
+<!-- ripped by musashi-->
+<!-- check out The Universal Stash -->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dad 'N Me</title>
+
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+
+    <style>
+  .watermark {
+    position: fixed;
+    bottom: 10px;
+    right: 15px;
+    color: rgba(200, 255, 255, 1)
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #flash {
+            width: 100vw;
+            height: 100vh;
+        }
+
+
+        #flash ruffle-player {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+   <div class="watermark">Ripped by Musashi</div>
+    <div id="flash"></div>
+
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+
+        window.addEventListener("load", (event) => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+            const container = document.getElementById("flash");
+            
+            container.appendChild(player);
+
+            player.load({
+                url: "https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/SWF/Dad_N_Me.swf",
+                autoplay: "on",
+                unmuteOverlay: "hidden",
+                // This ensures the game maintains its aspect ratio while scaling
+                letterbox: "on" 
+            });
+        });
+    </script>
+</body>
+</html>
