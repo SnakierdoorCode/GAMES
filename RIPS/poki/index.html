@@ -1,3 +1,6 @@
+<!--ripped by musashi-->
+<!--Check out The Universal Stash-->
+<!--If you need to DMCA please dm me on discord--> 
 
 <!DOCTYPE html>
 <html>
@@ -5,6 +8,23 @@
 	<meta charset="utf-8">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Gladihoppers</title>
+
+	<script>
+	window.PokiSDK = {
+		init: function() {
+			return new Promise((resolve) => {
+				console.log("Mock Poki SDK initialized.");
+				resolve(true);
+			});
+		},
+		getURLParam: function(name) { return null; },
+		gameplayStart: function() {},
+		gameplayStop: function() {},
+		commercialBreak: function(callback) { if (callback) callback(); },
+		rewardedBreak: function(callback) { if (callback) callback(true); }
+	};
+	</script>
+
 	<script>
 	window.config = {
 		loader: 'unity',
@@ -13,22 +33,23 @@
 		minRatio: 9 / 16,
 
 		title: 'Gladihoppers',
-		thumbnail: 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/null.png',
-		numScreenshots:  5 ,
+		thumbnail: 'https://raw.githack.com/SnakierdoorCode/GAMES/main/RIPS/poki/null.png',
+		numScreenshots: 5,
 
 		unityVersion: '2019.3.13f1',
-		unityWebglBuildUrl: 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/build/Gladihoppers.json',
 
-		fileSize:  23 ,
+		unityWebglBuildUrl: 'https://raw.githack.com/SnakierdoorCode/GAMES/main/RIPS/poki/build/Gladihoppers.json',
+
+		fileSize: 23,
 		cachedDecompressedFileSizes: {
-			'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/build/Gladihoppers.data.unityweb':  17409938 ,
-			'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/build/Gladihoppers.wasm.code.unityweb':  6410659 ,
-			'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/build/Gladihoppers.wasm.framework.unityweb':  91463 ,
+			'Gladihoppers.data.unityweb': 17409938,
+			'Gladihoppers.wasm.code.unityweb': 6410659,
+			'Gladihoppers.wasm.framework.unityweb': 91463,
 		},
 	};
 	</script>
 </head>
 <body>
-	<script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/poki/build/poki-master-loader.js"></script>
+	<script src="https://raw.githack.com/SnakierdoorCode/GAMES/main/RIPS/poki/build/poki-master-loader.js"></script>
 </body>
 </html>
