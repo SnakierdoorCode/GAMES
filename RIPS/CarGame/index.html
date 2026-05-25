@@ -1,25 +1,24 @@
 <!--Ripped by musashi-->
-<!--Check out the universal stash-->
+<!--Check out The Universal Stash-->
 
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
     <style>
-  .watermark {
-    position: fixed;
-    bottom: 10px;
-    right: 15px       ;
-    color: rgba(255, 255, 255, 0.4); 
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 9999;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-</style>
-<div class="watermark">Ripped by musashi | Check out the universal stash</div>
-    <base href="">
+      .watermark {
+        position: fixed;
+        bottom: 10px;
+        right: 15px;
+        color: rgba(255, 255, 255, 0.4);
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 9999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+    </style>
+    <div class="watermark">Ripped by musashi | Check out the universal stash</div>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity WebGL Player | CarGame</title>
@@ -38,12 +37,140 @@
         display: block;
       }
     </style>
-    <script src="Build/UnityLoader.js"></script>
-    <script>
-      UnityLoader.instantiate("unityContainer", "Build/web.json");
-    </script>
   </head>
   <body>
     <div id="unityContainer"></div>
+    <script>
+      var BUST = "?t=" + new Date().getTime();
+      var RAW = "https://raw.githack.com/SnakierdoorCode/GAMES/main/RIPS/CarGame/Build/";
+
+      function fetchPart(url) {
+        return new Promise(function(resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("GET", url + BUST, true);
+          xhr.responseType = "arraybuffer";
+          xhr.onload = function() {
+            if (xhr.status === 200 || xhr.status === 206) {
+              var array = new Uint8Array(xhr.response);
+              console.log(`[DOWNLOAD SUCCESS] ${url.split('/').pop().split('?')[0]} -> Size: ${array.length} bytes`);
+              resolve(array);
+            } else {
+              reject(new Error("Could not load file: " + url + " (status " + xhr.status + ")"));
+            }
+          };
+          xhr.onerror = function() {
+            reject(new Error("Network error loading file: " + url));
+          };
+          xhr.send();
+        });
+      }
+
+      async function mergeAndDecompress(parts, mimeType) {
+        var buffers = [];
+        for (var i = 0; i < parts.length; i++) {
+          buffers.push(await fetchPart(parts[i]));
+        }
+        
+        var totalLen = buffers.reduce(function(a, b) { return a + b.length; }, 0);
+        var merged = new Uint8Array(totalLen);
+        var offset = 0;
+        for (var i = 0; i < buffers.length; i++) {
+          merged.set(buffers[i], offset);
+          offset += buffers[i].length;
+        }
+
+        console.log(`[MERGE COMPLETE] Total merged size: ${merged.length} bytes`);
+
+        var decompressed;
+        if (merged[0] === 0x1f && merged[1] === 0x8b) {
+          try {
+            var response = new Response(merged);
+            var decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
+            var decompressedArrayBuffer = await new Response(decompressedStream).arrayBuffer();
+            decompressed = new Uint8Array(decompressedArrayBuffer);
+            console.log(`[DECOMPRESSION SUCCESS] Unpacked size: ${decompressed.length} bytes`);
+          } catch (e) {
+            throw new Error("Gzip decompression failed. File chunks are corrupt. " + e.message);
+          }
+        } else {
+          decompressed = merged;
+        }
+
+        var blob = new Blob([decompressed], { type: mimeType });
+        return URL.createObjectURL(blob);
+      }
+
+      async function mergeAndCreateUrl(parts, mimeType) {
+        var buffers = [];
+        for (var i = 0; i < parts.length; i++) {
+          buffers.push(await fetchPart(parts[i]));
+        }
+        var blob = new Blob(buffers, { type: mimeType });
+        return URL.createObjectURL(blob);
+      }
+
+      (async () => {
+        try {
+          // 1. Data files (Has space -> v1.1%20web)
+          var dataBlobUrl = await mergeAndDecompress(
+            [
+              RAW + "v1.1%20web.data.unityweb.part1",
+              RAW + "v1.1%20web.data.unityweb.part2"
+            ],
+            "application/octet-stream"
+          );
+          
+          // 2. Framework file (Renamed to NO space -> v1.1web)
+          var frameworkBlobUrl = await mergeAndDecompress(
+            [RAW + "v1.1web.wasm.framework.unityweb"],
+            "application/javascript"
+          );
+          
+          // 3. Code file (Has space -> v1.1%20web)
+          var codeBlobUrl = await mergeAndDecompress(
+            [RAW + "v1.1%20web.wasm.code.unityweb"],
+            "application/wasm"
+          );
+
+          var urlMap = {
+            "web.data.unityweb":           dataBlobUrl,
+            "web.wasm.framework.unityweb": frameworkBlobUrl,
+            "web.wasm.code.unityweb":      codeBlobUrl,
+          };
+
+          var OriginalXHR = window.XMLHttpRequest;
+          window.XMLHttpRequest = function() {
+            var xhr = new OriginalXHR();
+            var originalOpen = xhr.open.bind(xhr);
+            xhr.open = function(method, url) {
+              var redirected = url;
+              for (var pattern in urlMap) {
+                if (url.indexOf(pattern) !== -1) {
+                  redirected = urlMap[pattern];
+                  break;
+                }
+              }
+              return originalOpen(method, redirected);
+            };
+            return xhr;
+          };
+
+          var loaderBlobUrl = await mergeAndCreateUrl(
+            [RAW + "UnityLoader.js"],
+            "application/javascript"
+          );
+
+          var script = document.createElement("script");
+          script.src = loaderBlobUrl;
+          script.onload = function() {
+            UnityLoader.instantiate("unityContainer", RAW + "web.json" + BUST);
+          };
+          document.body.appendChild(script);
+
+        } catch (err) {
+          alert("Initialization Error: " + err.message);
+        }
+      })();
+    </script>
   </body>
 </html>
