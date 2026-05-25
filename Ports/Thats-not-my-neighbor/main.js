@@ -40,15 +40,15 @@ function getParts(file, start, end) {
 }
 
 Promise.all([
-    mergeFiles(getParts("notmyneighbor.pck", 1, 23)),
-    mergeFiles(getParts("notmyneighbor.wasm", 1, 3))
+    mergeFiles(getParts("thats-not-my-neighbor.pck", 1, 23)),
+    mergeFiles(getParts("thats-not-my-neighbor.wasm", 1, 3))
 ]).then(([pckUrl, wasmUrl]) => {
     window.fetch = async function (url, ...args) {
         const urlString = typeof url === 'string' ? url : (url.url || "");
 
-        if (urlString.endsWith("notmyneighbor.pck")) {
+        if (urlString.endsWith("thats-not-my-neighbor.pck")) {
             return originalFetch(pckUrl, ...args);
-        } else if (urlString.endsWith("notmyneighbor.wasm")) {
+        } else if (urlString.endsWith("thats-not-my-neighbor.wasm")) {
             return originalFetch(wasmUrl, ...args);
         } else {
             return originalFetch(url, ...args);
