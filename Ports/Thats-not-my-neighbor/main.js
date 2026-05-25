@@ -31,8 +31,8 @@ function getParts(file, start, end) {
     return parts;
 }
 Promise.all([
-    mergeFiles(getParts("notmyneighbor.pck", 1, 19)),
-    mergeFiles(getParts("notmyneighbor.wasm", 1, 2))
+    mergeFiles(getParts("notmyneighbor.pck", 1, 20)),
+    mergeFiles(getParts("notmyneighbor.wasm", 1, 3))
 ]).then(([pckUrl, wasmUrl]) => {
     window.fetch = async function (url, ...args) {
         if (url.endsWith("notmyneighbor.pck")) {
