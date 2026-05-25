@@ -1,0 +1,17 @@
+{
+"companyName": "DefaultCompany",
+"productName": "CarGame",
+"productVersion": "0.1",
+"dataUrl": "v1.1 web.data.unityweb",
+"wasmCodeUrl": "v1.1 web.wasm.code.unityweb",
+"wasmFrameworkUrl": "v1.1 web.wasm.framework.unityweb",
+"graphicsAPI": ["WebGL 2.0","WebGL 1.0"],
+"webglContextAttributes": {"preserveDrawingBuffer": false},
+"backgroundUrl": "v1.1 web.jpg",
+"splashScreenStyle": "Dark",
+"backgroundColor": "#FFFFFF",
+"cacheControl": {"default": "must-revalidate"},
+"developmentBuild": false,
+"multithreading": false,
+"unityVersion": "2019.3.0f6"
+}
