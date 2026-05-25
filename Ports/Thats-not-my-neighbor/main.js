@@ -31,13 +31,13 @@ function getParts(file, start, end) {
     return parts;
 }
 Promise.all([
-    mergeFiles(getParts("thats-not-my-neighbor.pck", 1, 19)),
-    mergeFiles(getParts("thats-not-my-neighbor.wasm", 1, 2))
+    mergeFiles(getParts("notmyneighbor.pck", 1, 19)),
+    mergeFiles(getParts("notmyneighbor.wasm", 1, 2))
 ]).then(([pckUrl, wasmUrl]) => {
     window.fetch = async function (url, ...args) {
-        if (url.endsWith("thats-not-my-neighbor.pck")) {
+        if (url.endsWith("notmyneighbor.pck")) {
             return originalFetch(pckUrl, ...args);
-        } else if (url.endsWith("thats-not-my-neighbor.wasm")) {
+        } else if (url.endsWith("notmyneighbor.wasm")) {
             return originalFetch(wasmUrl, ...args);
         } else {
             return originalFetch(url, ...args);
