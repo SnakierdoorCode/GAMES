@@ -1,6 +1,6 @@
 const originalFetch = window.fetch;
 
-// Automatically extract the absolute Statically CDN path from the HTML's <base> tag
+// Grabs the clean raw.statically.io root path right out of the HTML head template
 const baseElement = document.querySelector('base');
 const cdnBaseUrl = baseElement ? baseElement.href : "";
 
@@ -16,7 +16,7 @@ function mergeFiles(fileParts) {
                 return;
             }
             
-            // FIX: Prepend the absolute cdnBaseUrl to force a direct CDN fetch and prevent CORS-triggering redirects
+            // Forces absolute HTTPS connection to the raw asset edge node
             const absoluteUrl = cdnBaseUrl + fileParts[index];
 
             originalFetch(absoluteUrl).then((response) => {
@@ -39,13 +39,12 @@ function getParts(file, start, end) {
     return parts;
 }
 
-// Keep your clean, hyphenless filenames completely intact
+// Executes background assembly on the raw.statically node
 Promise.all([
     mergeFiles(getParts("notmyneighbor.pck", 1, 19)),
     mergeFiles(getParts("notmyneighbor.wasm", 1, 2))
 ]).then(([pckUrl, wasmUrl]) => {
     window.fetch = async function (url, ...args) {
-        // Safe string conversion check in case Godot passes a Request object instead of a raw URL string
         const urlString = typeof url === 'string' ? url : (url.url || "");
 
         if (urlString.endsWith("notmyneighbor.pck")) {
@@ -57,10 +56,9 @@ Promise.all([
         }
     };
     
-    // Fire the game engine loading layout now that blobs are securely stitched
     if (typeof window.godotrunfunction === 'function') {
         window.godotrunfunction();
     }
 }).catch((err) => {
-    console.error("Stitching engine failed critical assembly:", err);
+    console.error("Assembly failed:", err);
 });
