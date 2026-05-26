@@ -1,6 +1,5 @@
 const originalFetch = window.fetch;
 
-// Absolute jsDelivr CDN path where your files actually live
 const cdnBaseUrl = "https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Thats-not-my-neighbor/";
 
 function mergeFiles(fileParts) {
@@ -14,11 +13,9 @@ function mergeFiles(fileParts) {
                 resolve(mergedFileUrl);
                 return;
             }
-            
-            // FIX: Forces the browser to load from jsDelivr, not the local host domain
+
             const absoluteUrl = cdnBaseUrl + fileParts[index];
 
-            // Use originalFetch here so your background worker doesn't intercept itself
             originalFetch(absoluteUrl).then((response) => {
                 if (!response.ok) throw new Error("Missing part: " + fileParts[index]);
                 return response.arrayBuffer();
