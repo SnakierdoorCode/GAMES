@@ -1,15 +1,31 @@
+<!--ripped by musashi-->
+<!--Check out The Universal Stash-->
+
+
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <base href="/TemplateData/">
+    <base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/Treeshateyou/TemplateData/">
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Trees Hate You</title>
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css">
+    <title>Trees Hate You</title>
     
     <style>
-      /* Reset default padding and remove scrollbars */
+  .watermark {
+    position: fixed;
+    bottom: 10px;
+    right: 15px;
+    color: rgba(255, 255, 255, 0.4); 
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+</style>
+
+    <style>
       html, body {
         margin: 0;
         padding: 0;
@@ -20,7 +36,6 @@
         font-family: sans-serif;
       }
 
-      /* Container stretches to perfectly fill the browser viewport */
       #unity-container {
         width: 100vw !important;
         height: 100vh !important;
@@ -32,119 +47,202 @@
         justify-content: center;
       }
 
-      /* Canvas dynamically stretches while respecting engine aspects */
       #unity-canvas {
         width: 100% !important;
         height: 100% !important;
         display: block;
       }
 
-      /* Keeps the loading bar centered over the dark viewport */
       #unity-loading-bar {
         position: absolute;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        display: none;
+        display: block;
         z-index: 10;
+        color: white;
+        text-align: center;
       }
 
-      /* Hide the standard old template footer to preserve gameplay real estate */
+      #custom-progress-text {
+        color: #fff;
+        font-size: 18px;
+        margin-top: 10px;
+      }
+
       #unity-footer {
         display: none !important;
       }
     </style>
   </head>
   <body>
+    <div class="watermark">Ripped by Musashi - Check out The Universal Stash</div>
     <div id="unity-container">
       <canvas id="unity-canvas" tabindex="-1"></canvas>
       <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
+        <div id="custom-progress-text">Downloading external game segments...</div>
+        <div style="width:200px; height:10px; background:#333; margin:10px auto; border-radius:5px; overflow:hidden;">
+          <div id="unity-progress-bar-full" style="width:0%; height:100%; background:#fff; transition: width 0.2s;"></div>
         </div>
       </div>
       <div id="unity-warning"> </div>
     </div>
 
     <script>
+      const originalFetch = window.fetch;
+      
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressText = document.querySelector("#custom-progress-text");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
 
       function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px; color: white;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px; color: black;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
+        console.warn("Unity Banner: ", msg);
       }
 
-      var baseBuildUrl = "Build/";
-
-      // This is called by main.js once the chunks are stitched and ready
-      window.unityRunFunction = function() {
-        loadingBar.style.display = "block";
-
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          var meta = document.createElement('meta');
-          meta.name = 'viewport';
-          meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-          document.getElementsByTagName('head')[0].appendChild(meta);
-          container.className = "unity-mobile";
-          canvas.className = "unity-mobile";
-        }
-
-        var config = {
-          arguments: [],
-          dataUrl:         baseBuildUrl + "TreesHateYou_Web.data.br",
-          frameworkUrl:    baseBuildUrl + "TreesHateYou_Web.framework.js.br",
-          codeUrl:         baseBuildUrl + "TreesHateYou_Web.wasm.br",
-          streamingAssetsUrl: "StreamingAssets",
-          companyName: "tykenn games",
-          productName: "Trees Hate You",
-          productVersion: "0.1.0",
-          showBanner: unityShowBanner,
-        };
-
-        var script = document.createElement("script");
-        script.src = baseBuildUrl + "TreesHateYou_Web.loader.js";
-        script.onload = function() {
-          createUnityInstance(canvas, config, function(progress) {
-            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-          }).then(function(unityInstance) {
-            loadingBar.style.display = "none";
-            
-            // DYNAMIC RESIZE HANDLER: Forces WebGL framework context update on window changes
-            function resizeCanvas() {
-              canvas.style.width = window.innerWidth + "px";
-              canvas.style.height = window.innerHeight + "px";
+      function mergeFiles(fileParts) {
+        return new Promise((resolve, reject) => {
+          let buffers = [];
+          function fetchPart(index) {
+            if (index >= fileParts.length) {
+              let totalLength = buffers.reduce((acc, b) => acc + b.byteLength, 0);
+              let combinedArray = new Uint8Array(totalLength);
+              let offset = 0;
+              for (let b of buffers) {
+                combinedArray.set(new Uint8Array(b), offset);
+                offset += b.byteLength;
+              }
+              resolve(combinedArray.buffer);
+              return;
             }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas(); // Initialize on launch
             
-          }).catch(function(message) {
-            alert(message);
-          });
-        };
-        script.onerror = function() {
-          unityShowBanner("Failed to load Unity loader script.", "error");
-        };
-        document.body.appendChild(script);
-      };
-    </script>
+            const absoluteUrl = document.baseURI + fileParts[index];
+            
+            originalFetch(absoluteUrl).then((response) => {
+              if (!response.ok) throw new Error("Could not download asset part: " + fileParts[index]);
+              return response.arrayBuffer();
+            }).then((data) => {
+              buffers.push(data);
+              fetchPart(index + 1);
+            }).catch(reject);
+          }
+          fetchPart(0);
+        });
+      }
 
-    <script src="main.js"></script>
+      function getParts(file, start, end) {
+        let parts = [];
+        for (let i = start; i <= end; i++) {
+          parts.push(file + ".part" + i);
+        }
+        return parts;
+      }
+
+      async function processAssetsAndLaunch() {
+        const buildDir = "Build/";
+
+        try {
+          progressText.innerText = "Connecting to CDN Repository...";
+          progressBarFull.style.width = "5%";
+          const [dataBuffer, wasmBuffer, frameworkResponse] = await Promise.all([
+            mergeFiles(getParts(buildDir + "TreesHateYou_Web.data.br", 1, 5)),
+            mergeFiles(getParts(buildDir + "TreesHateYou_Web.wasm.br", 1, 4)),
+            originalFetch(document.baseURI + buildDir + "TreesHateYou_Web.framework.js.br")
+          ]);
+
+          if (!frameworkResponse.ok) throw new Error("Failed to fetch framework library binary.");
+          const frameworkBuffer = await frameworkResponse.arrayBuffer();
+
+          progressBarFull.style.width = "40%";
+          progressText.innerText = "Stitching asset segments...";
+          const frameworkBlob = new Blob([frameworkBuffer], { type: "text/javascript" });
+          const frameworkBlobUrl = URL.createObjectURL(frameworkBlob);
+
+          window.fetch = async function (url, ...args) {
+            let urlStr = typeof url === 'string' ? url : url.url || '';
+            
+            if (urlStr.includes("TreesHateYou_Web.data")) {
+              return new Response(dataBuffer, {
+                status: 200, statusText: "OK", headers: { "Content-Type": "application/octet-stream" }
+              });
+            } 
+            if (urlStr.includes("TreesHateYou_Web.wasm") || urlStr.includes("build.wasm")) {
+              return new Response(wasmBuffer, {
+                status: 200, statusText: "OK", headers: { "Content-Type": "application/wasm" }
+              });
+            }
+            if (urlStr.includes("TreesHateYou_Web.framework.js")) {
+              return new Response(frameworkBuffer, {
+                status: 200, statusText: "OK", headers: { "Content-Type": "text/javascript" }
+              });
+            }
+            
+            if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://") && !urlStr.startsWith("blob:")) {
+                url = document.baseURI + urlStr;
+            }
+            return originalFetch(url, ...args);
+          };
+
+          progressText.innerText = "Initializing Unity Engine...";
+          progressBarFull.style.width = "60%";
+
+          var config = {
+            arguments: [],
+            dataUrl:         buildDir + "TreesHateYou_Web.data.br",
+            frameworkUrl:    frameworkBlobUrl,
+            codeUrl:         buildDir + "TreesHateYou_Web.wasm.br",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "tykenn games",
+            productName: "Trees Hate You",
+            productVersion: "0.1.0",
+            showBanner: unityShowBanner,
+          };
+
+          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+            container.className = "unity-mobile";
+            canvas.className = "unity-mobile";
+          }
+
+          var script = document.createElement("script");
+          script.src = document.baseURI + buildDir + "TreesHateYou_Web.loader.js";
+          script.crossOrigin = "anonymous";
+          
+          script.onload = function() {
+            createUnityInstance(canvas, config, function(progress) {
+              progressBarFull.style.width = (60 + (progress * 40)) + "%";
+              progressText.innerText = "Loading Game World (" + Math.round(progress * 100) + "%)...";
+            }).then(function(unityInstance) {
+              loadingBar.style.display = "none";
+              
+              function updateResponsiveBounds() {
+                canvas.style.width = window.innerWidth + "px";
+                canvas.style.height = window.innerHeight + "px";
+              }
+              window.addEventListener('resize', updateResponsiveBounds);
+              updateResponsiveBounds();
+              
+            }).catch(function(message) {
+              alert("Unity Launch Error: " + message);
+            });
+          };
+          
+          script.onerror = function() {
+            progressText.innerText = "CDN Error: Failed to execute loader script securely.";
+          };
+          document.body.appendChild(script);
+
+        } catch (error) {
+          progressText.innerText = "Initialization failed: " + error.message;
+          console.error(error);
+        }
+      }
+
+      processAssetsAndLaunch();
+    </script>
   </body>
 </html>
