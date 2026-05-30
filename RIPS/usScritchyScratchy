@@ -1,0 +1,144 @@
+<!--credit to French Fry for ripping-->
+<!--check out The Universal Stash-->
+
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/unity/scritchy/">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=1280 height=720 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-logo-title-footer"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Scritchy Scratchy</div>
+      </div>
+    </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+      const chunkedFiles = {
+        "Build/WebGL.data.br":  { parts: 4, ext: "application/octet-stream" },
+        "Build/WebGL.wasm.br":  { parts: 3, ext: "application/wasm" },
+      };
+      const blobCache = {};
+      async function fetchChunked(url) {
+        if (blobCache[url]) return blobCache[url];
+        const info = chunkedFiles[url];
+        if (!info) return url;
+        const fetches = [];
+        for (let i = 1; i <= info.parts; i++) {
+          const partUrl = url + ".part" + String(i).padStart(3, "0");
+          fetches.push(fetch(partUrl).then(r => r.arrayBuffer()));
+        }
+        const buffers = await Promise.all(fetches);
+        const total = buffers.reduce((s, b) => s + b.byteLength, 0);
+        const merged = new Uint8Array(total);
+        let offset = 0;
+        for (const buf of buffers) {
+          merged.set(new Uint8Array(buf), offset);
+          offset += buf.byteLength;
+        }
+        const blob = new Blob([merged], { type: info.ext });
+        const blobUrl = URL.createObjectURL(blob);
+        blobCache[url] = blobUrl;
+        return blobUrl;
+      }
+      const _origFetch = window.fetch.bind(window);
+      window.fetch = async function(input, init) {
+        const url = typeof input === "string" ? input : input.url;
+        const rel = url.replace(location.origin + location.pathname.replace(/[^/]*$/, ""), "").replace(/^\//, "");
+        if (chunkedFiles[rel]) {
+          const blobUrl = await fetchChunked(rel);
+          return _origFetch(blobUrl, init);
+        }
+        return _origFetch(input, init);
+      };
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/WebGL.loader.js";
+      const frameworkUrl = buildUrl + "/WebGL.framework.js.br";
+      function injectFramework(onload) {
+        fetch(frameworkUrl)
+          .then(r => r.arrayBuffer())
+          .then(buf => {
+            const blob = new Blob([buf], { type: "application/javascript" });
+            const blobUrl = URL.createObjectURL(blob);
+            const s = document.createElement("script");
+            s.src = blobUrl;
+            s.onload = onload;
+            s.onerror = () => unityShowBanner("Failed to load framework from " + frameworkUrl, "error");
+            document.body.appendChild(s);
+          })
+          .catch(e => unityShowBanner("Failed to fetch framework: " + e, "error"));
+      }
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/WebGL.data.br",
+        frameworkUrl: "data:application/javascript,", // injected manually via blob below
+        codeUrl: buildUrl + "/WebGL.wasm.br",
+        streamingAssetsUrl: "https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/unity/scritchy/StreamingAssets",
+        companyName: "Lunch Money Games",
+        productName: "Scritchy Scratchy",
+        productVersion: "0.8",
+        showBanner: unityShowBanner,
+      };
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        document.querySelector("#unity-container").className = "unity-mobile";
+        canvas.className = "unity-mobile";
+      } else {
+        canvas.style.width = "1280px";
+        canvas.style.height = "720px";
+      }
+      document.querySelector("#unity-loading-bar").style.display = "block";
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        injectFramework(() => {
+          createUnityInstance(canvas, config, (progress) => {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            document.querySelector("#unity-fullscreen-button").onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }).catch((message) => {
+            alert(message);
+          });
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
