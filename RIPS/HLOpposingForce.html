@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/oppose/">
+<title>Loading Half-Life Opposing Force</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+    color: #fff;
+    overflow: hidden;
+}
+#loading-container {
+    width: 60%;
+    max-width: 600px;
+    text-align: center;
+}
+#progress-bar {
+    width: 100%;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 30px;
+    margin-top: 10px;
+    box-shadow: 0 0 10px #000 inset;
+}
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    transition: width 0.05s linear;
+}
+#progress-text {
+    margin-top: 10px;
+    font-size: 18px;
+}
+#status-text {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #aaa;
+}
+canvas {
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    position: fixed;
+    display: none;
+}
+</style>
+<script src="./fix.js"></script>
+<script src="./raw.js"></script>
+<script src="./jszip.js"></script>
+</head>
+<body>
+<div id="loading-container">
+    <h1>Loading Half-Life Opposing Force...</h1>
+    <div id="progress-bar">
+        <div id="progress-fill"></div>
+    </div>
+    <div id="progress-text">0%</div>
+    <div id="status-text">Checking cache...</div>
+</div>
+<canvas id="canvas"></canvas>
+
+<script type="module">
+const CACHE_NAME = 'opfor-zip-v1';
+const CACHE_KEY = 'https://localcache/gearbox.zip';
+
+async function fetchWithProgress(url, onProgress) {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        throw new Error(`Failed to fetch ${url}: ${res.status}`);
+    }
+
+    const totalBytes = parseInt(res.headers.get('Content-Length')) || 0;
+    const reader = res.body.getReader();
+
+    let loadedBytes = 0;
+    const chunks = [];
+
+    while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        chunks.push(value);
+        loadedBytes += value.length;
+
+        if (onProgress) {
+            onProgress(loadedBytes, totalBytes);
+        }
+    }
+
+    const combined = new Uint8Array(loadedBytes);
+
+    let offset = 0;
+    for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    return combined;
+}
+
+async function main() {
+    const canvas = document.getElementById('canvas');
+    const loadingContainer = document.getElementById('loading-container');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const statusText = document.getElementById('status-text');
+
+    canvas.tabIndex = 0;
+    canvas.addEventListener('click', () => canvas.focus());
+
+    function setProgress(pct, status) {
+        progressFill.style.width = pct + '%';
+        progressText.innerText = Math.floor(pct) + '%';
+
+        if (status) {
+            statusText.innerText = status;
+        }
+    }
+
+    let zipBytes = null;
+
+    setProgress(0, 'Checking cache...');
+
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(CACHE_KEY);
+
+        if (cached) {
+            setProgress(0, 'Loading from cache...');
+            zipBytes = new Uint8Array(await cached.arrayBuffer());
+        }
+    } catch (e) {
+        console.warn('Cache read failed, will re-download.', e);
+    }
+
+    if (!zipBytes) {
+        const PART_COUNT = 22;
+
+        const loadedParts = new Array(PART_COUNT).fill(0);
+        const totalParts = new Array(PART_COUNT).fill(0);
+
+        function updateDownloadProgress() {
+            const loaded = loadedParts.reduce((a, b) => a + b, 0);
+            const total = totalParts.reduce((a, b) => a + b, 0);
+
+            const pct = total > 0
+                ? (loaded / total) * 50
+                : 0;
+
+            setProgress(
+                pct,
+                `Downloading... (${Math.floor(loaded / 1024 / 1024)} MB / ${Math.floor(total / 1024 / 1024)} MB)`
+            );
+        }
+
+        setProgress(0, 'Downloading...');
+
+        const partPromises = [];
+
+for (let i = 1; i <= PART_COUNT; i++) {
+    const partName =
+        i < 10
+            ? `./gearbox.zip.part0${i}`
+            : `./gearbox.zip.part${i}`;
+
+    partPromises.push(
+        fetchWithProgress(partName, (loaded, total) => {
+            loadedParts[i - 1] = loaded;
+            totalParts[i - 1] = total;
+            updateDownloadProgress();
+        })
+    );
+}
+
+        const parts = await Promise.all(partPromises);
+
+        const totalSize = parts.reduce(
+            (sum, part) => sum + part.length,
+            0
+        );
+
+        zipBytes = new Uint8Array(totalSize);
+
+        let offset = 0;
+
+        for (const part of parts) {
+            zipBytes.set(part, offset);
+            offset += part.length;
+        }
+
+        setProgress(50, 'Saving to cache...');
+
+        try {
+            const cache = await caches.open(CACHE_NAME);
+
+            await cache.put(
+                CACHE_KEY,
+                new Response(zipBytes, {
+                    headers: {
+                        'Content-Type': 'application/zip'
+                    }
+                })
+            );
+        } catch (e) {
+            console.warn(
+                'Cache write failed (storage quota?), continuing anyway.',
+                e
+            );
+        }
+    }
+
+    setProgress(50, 'Extracting...');
+
+    const zip = await JSZip.loadAsync(zipBytes);
+    const fileKeys = Object.keys(zip.files);
+    const files = {};
+
+    for (let i = 0; i < fileKeys.length; i++) {
+        const p = fileKeys[i];
+        const file = zip.files[p];
+
+        if (file.dir) {
+            continue;
+        }
+
+        const path = `/rodir/${p}`;
+
+        files[path] = await file.async("uint8array");
+
+        const pct =
+            50 +
+            Math.floor(
+                ((i + 1) / fileKeys.length) * 50
+            );
+
+        setProgress(pct, 'Extracting...');
+    }
+
+    const extras = await (
+        await fetch('./valve/extras.pk3')
+    ).arrayBuffer();
+
+    loadingContainer.style.display = 'none';
+    canvas.style.display = 'block';
+
+    Xash3D({
+        arguments: [
+            '-game',
+            'gearbox',
+            '-windowed',
+            '-console',
+            '-ref',
+            'webgl2'
+        ],
+
+        canvas: canvas,
+
+        dynamicLibraries: [
+            "filesystem_stdio.wasm",
+            "libref_webgl2.wasm",
+            "cl_dlls/menu_emscripten_wasm32.wasm",
+            "dlls/opfor_emscripten_wasm32.wasm",
+            "cl_dlls/client_emscripten_wasm32.wasm"
+        ],
+
+        locateFile: p => p,
+
+        onRuntimeInitialized: function () {
+            Object.keys(files).forEach(k => {
+                const dir = k.substring(
+                    0,
+                    k.lastIndexOf('/')
+                );
+
+                this.FS.mkdirTree(dir);
+                this.FS.writeFile(k, files[k]);
+            });
+
+            this.FS.writeFile(
+                '/rodir/valve/extras.pk3',
+                new Uint8Array(extras)
+            );
+
+            this.FS.writeFile(
+                '/rodir/valve/autoexec.cfg',
+`bind "F9" "toggleconsole"`
+            );
+
+            this.FS.chdir('/rodir');
+            this.FS.mkdir('/rwdir');
+        }
+    });
+
+    setTimeout(() => canvas.focus(), 500);
+}
+
+main().catch(err => {
+    console.error(err);
+
+    document.getElementById('status-text').textContent =
+        'Error: ' + err.message;
+});
+</script>
+</body>
+</html>
