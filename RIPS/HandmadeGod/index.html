@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HANDMADE GOD</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="img/icon.png">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="world-wrap" aria-label="Game world">
+        <div class="top-bar">
+          <div>
+            <h1>HANDMADE GOD</h1>
+            <p id="levelText">Craft reality, not items.</p>
+          </div>
+          <div class="status-board">
+            <button id="savedCounter" type="button" title="Level goal">
+              <span id="savedLabel">0 / 0</span>
+              <span class="save-meter"><span id="saveMeterFill"></span></span>
+            </button>
+            <button id="ruleBudget" type="button" title="Rules left">Rules 0</button>
+            <button id="solveBtn" type="button" title="Show solution">OK</button>
+            <button id="muteBtn" type="button" title="Sound">Sound</button>
+            <button id="resetBtn" type="button" title="Restart level">Reset</button>
+          </div>
+        </div>
+
+        <div id="world" class="world">
+          <div id="stage" class="stage"></div>
+          <div id="hand" class="hand" aria-hidden="true">&#x1F590;</div>
+          <div id="toast" class="toast" aria-live="polite"></div>
+        </div>
+
+        <div class="hint-strip">
+          <span>Drag a rule onto an object.</span>
+          <span>Click an object's tag to remove a rule.</span>
+          <span>Guide every scribble to the door.</span>
+        </div>
+
+      </section>
+
+      <aside class="rule-panel" aria-label="Rule panel">
+        <div class="panel-title">
+          <h2>Rules</h2>
+          <p>god stickers</p>
+        </div>
+        <div id="rules" class="rules"></div>
+        <div id="inspector" class="inspector">
+          <h3>Pick an object</h3>
+          <p>Hover or drop a rule onto a drawn thing.</p>
+        </div>
+      </aside>
+
+      <div class="editor">
+        <div class="editor-title">
+          <h3>Level Editor</h3>
+          <button id="editorToggle" type="button">Off</button>
+        </div>
+        <div id="editorTools" class="editor-tools">
+          <button type="button" data-tool="platform">Platform</button>
+          <button type="button" data-tool="water">Water</button>
+          <button type="button" data-tool="wall">Wall</button>
+          <button type="button" data-tool="stone">Stone</button>
+          <button type="button" data-tool="enemy">Enemy</button>
+          <button type="button" data-tool="crate">Box</button>
+          <button type="button" data-tool="spawn">Scribble</button>
+          <button type="button" data-tool="exit">Door</button>
+        </div>
+        <div class="editor-actions">
+          <button id="playCustomBtn" type="button">Play</button>
+          <button id="clearCustomBtn" type="button">Clear</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
