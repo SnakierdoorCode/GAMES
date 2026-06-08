@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loading...</title>
+    <base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/startup/">
+    <meta charset="utf-8"/>
+    <link href="dest/loader.css" rel="stylesheet"/>
+    <link href="dest/libs.css" rel="stylesheet"/>
+</head>
+
+<body ng-app="game"
+      ng-class="::{ developerMode: game.developerMode }"
+      class="{{ activeBuilding.type }} scale{{ $root.options.uiScale }}"
+      ng-controller="GameController as game">
+<script src="require-shim.js"></script>
+<script src="dest/disk.min.js"></script>
+<script src="webview-shim.js"></script>
+
+<div id="loading-screen">
+    <div class="top"></div>
+    <div class="bottom">
+        <div class="spinner">
+            <div class="dot1"></div>
+            <div class="dot2"></div>
+        </div>
+    </div>
+</div>
+
+<ui ng-if="settings.started" class="{{ mode }}"></ui>
+
+<div>
+    <canvas id="grid"></canvas>
+    <canvas id="items"></canvas>
+    <canvas id="overlays"></canvas>
+    <div id="isodom-dimmer"></div>
+</div>
+
+<pause-blur class="animated flash" ng-if="settings.started && settings.paused" disable-animate>
+    <div></div>
+</pause-blur>
+
+<city-map ng-if="mode == 'cityMap'"></city-map>
+
+<office></office>
+
+<menu ng-if="view == 'menu'" class="flex-super-center"></menu>
+<message class="dimmer" ng-if="Message.visible"></message>
+<achievement ng-if="settings != null && options.activeAchievement != null" ng-click="options.activeAchievement = null"></achievement>
+<script src="dest/game.min.js"></script>
+
+</body>
+</html>
