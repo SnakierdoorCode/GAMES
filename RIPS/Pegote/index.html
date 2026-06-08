@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | Pegote</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #000;
+      }
+      #unity-container {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #unity-canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      async function assembleChunks(parts, mimeType) {
+        const buffers = [];
+        for (const part of parts) {
+          const response = await fetch(part);
+          if (!response.ok) {
+            throw new Error(`Failed to download part: ${part}`);
+          }
+          buffers.push(await response.arrayBuffer());
+        }
+        const blob = new Blob(buffers, { type: mimeType });
+        return URL.createObjectURL(blob);
+      }
+
+      async function initGame() {
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/pegote-web-jam.loader.js";
+
+        const dataParts = [
+          `${buildUrl}/pegote-web-jam.data.br.part1`,
+          `${buildUrl}/pegote-web-jam.data.br.part2`
+        ];
+        
+        const wasmParts = [
+          `${buildUrl}/pegote-web-jam.wasm.br.part1`,
+          `${buildUrl}/pegote-web-jam.wasm.br.part2`,
+          `${buildUrl}/pegote-web-jam.wasm.br.part3`
+        ];
+
+        let finalDataUrl = "";
+        let finalWasmUrl = "";
+
+        try {
+          finalDataUrl = await assembleChunks(dataParts, 'application/octet-stream');
+          finalWasmUrl = await assembleChunks(wasmParts, 'application/wasm');
+        } catch (error) {
+          console.error("Chunk assembly crashed, attempting fallback:", error);
+          finalDataUrl = buildUrl + "/pegote-web-jam.data.br";
+          finalWasmUrl = buildUrl + "/pegote-web-jam.wasm.br";
+        }
+
+        var config = {
+          arguments: [],
+          dataUrl: finalDataUrl,
+          frameworkUrl: buildUrl + "/pegote-web-jam.framework.js.br",
+          codeUrl: finalWasmUrl,
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "DefaultCompany",
+          productName: "Pegote",
+          productVersion: "0.1.0",
+          showBanner: unityShowBanner,
+        };
+
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          var meta = document.createElement('meta');
+          meta.name = 'viewport';
+          meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+          document.getElementsByTagName('head')[0].appendChild(meta);
+          document.querySelector("#unity-container").className = "unity-mobile";
+          canvas.className = "unity-mobile";
+        }
+
+        function resizeCanvas() {
+          canvas.width = window.innerWidth * window.devicePixelRatio;
+          canvas.height = window.innerHeight * window.devicePixelRatio;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        document.querySelector("#unity-loading-bar").style.display = "block";
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+          createUnityInstance(canvas, config, (progress) => {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            
+            var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+            if (fullscreenButton) {
+              fullscreenButton.onclick = () => {
+                unityInstance.SetFullscreen(1);
+              };
+            }
+          }).catch((message) => {
+            alert(message);
+          });
+        };
+
+        document.body.appendChild(script);
+      }
+
+      initGame();
+    </script>
+  </body>
+</html>
