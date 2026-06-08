@@ -1,6 +1,10 @@
+<!-- Ripped by musashi-->
+<!-- Check out The Universal Stash-->
+
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
+    <base href="https://raw.githack.com/SnakierdoorCode/GAMES/main/RIPS/Pegote/Build/">
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity Web Player | Pegote</title>
@@ -14,6 +18,7 @@
         padding: 0;
         overflow: hidden;
         background-color: #000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
       #unity-container {
         width: 100% !important;
@@ -27,17 +32,112 @@
         height: 100% !important;
         display: block;
       }
+      #custom-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, #111116 0%, #050508 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      .loader-content {
+        text-align: center;
+      }
+      .rip-tag {
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        color: #ff0055;
+        text-shadow: 0 0 10px rgba(255, 0, 85, 0.6);
+        margin-bottom: 5px;
+        opacity: 0.8;
+      }
+      .title-tag {
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #fff;
+        text-shadow: 0 0 20px rgba(255,255,255,0.2);
+        margin-bottom: 40px;
+      }
+      .spinner-box {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 30px auto;
+      }
+      .spinner-circle {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 3px solid transparent;
+        border-top-color: #00ffcc;
+        border-radius: 50%;
+        animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      }
+      .spinner-inner {
+        position: absolute;
+        top: 10px; left: 10px; right: 10px; bottom: 10px;
+        border: 3px solid transparent;
+        border-top-color: #ff0055;
+        border-radius: 50%;
+        animation: spin 1.5s linear infinite reverse;
+      }
+      .progress-container {
+        width: 260px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0 auto;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+      }
+      #progress-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #00ffcc, #0077ff);
+        box-shadow: 0 0 10px #00ffcc;
+        transition: width 0.2s ease;
+      }
+      .status-text {
+        font-size: 11px;
+        color: #666677;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 15px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
+    <div id="custom-loader">
+      <div class="loader-content">
+        <div class="rip-tag">Ripped by Musashi on The Universal Stash</div>
+        <div class="title-tag">Pegote</div>
+        <div class="spinner-box">
+          <div class="spinner-circle"></div>
+          <div class="spinner-inner"></div>
+        </div>
+        <div class="progress-container">
+          <div id="progress-fill"></div>
+        </div>
+        <div class="status-text">Stitching Core Chunks...</div>
+      </div>
+    </div>
+
     <div id="unity-container">
       <canvas id="unity-canvas" tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
       <div id="unity-warning"> </div>
     </div>
     <script>
@@ -76,36 +176,42 @@
       }
 
       async function initGame() {
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/pegote-web-jam.loader.js";
+        var loaderUrl = "pegote-web-jam.loader.js";
 
         const dataParts = [
-          `${buildUrl}/pegote-web-jam.data.br.part1`,
-          `${buildUrl}/pegote-web-jam.data.br.part2`
+          "pegote-web-jam.data.br.part1",
+          "pegote-web-jam.data.br.part2"
         ];
         
         const wasmParts = [
-          `${buildUrl}/pegote-web-jam.wasm.br.part1`,
-          `${buildUrl}/pegote-web-jam.wasm.br.part2`,
-          `${buildUrl}/pegote-web-jam.wasm.br.part3`
+          "pegote-web-jam.wasm.br.part1",
+          "pegote-web-jam.wasm.br.part2",
+          "pegote-web-jam.wasm.br.part3"
+        ];
+
+        const frameworkParts = [
+          "pegote-web-jam.framework.js.br"
         ];
 
         let finalDataUrl = "";
         let finalWasmUrl = "";
+        let finalFrameworkUrl = "";
 
         try {
           finalDataUrl = await assembleChunks(dataParts, 'application/octet-stream');
           finalWasmUrl = await assembleChunks(wasmParts, 'application/wasm');
+          finalFrameworkUrl = await assembleChunks(frameworkParts, 'application/javascript');
         } catch (error) {
           console.error("Chunk assembly crashed, attempting fallback:", error);
-          finalDataUrl = buildUrl + "/pegote-web-jam.data.br";
-          finalWasmUrl = buildUrl + "/pegote-web-jam.wasm.br";
+          finalDataUrl = "pegote-web-jam.data.br";
+          finalWasmUrl = "pegote-web-jam.wasm.br";
+          finalFrameworkUrl = "pegote-web-jam.framework.js.br";
         }
 
         var config = {
           arguments: [],
           dataUrl: finalDataUrl,
-          frameworkUrl: buildUrl + "/pegote-web-jam.framework.js.br",
+          frameworkUrl: finalFrameworkUrl,
           codeUrl: finalWasmUrl,
           streamingAssetsUrl: "StreamingAssets",
           companyName: "DefaultCompany",
@@ -130,24 +236,26 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        document.querySelector("#unity-loading-bar").style.display = "block";
+        var statusText = document.querySelector(".status-text");
+        if (statusText) statusText.innerText = "Spawning WebGL Instance...";
 
         var script = document.createElement("script");
         script.src = loaderUrl;
         script.onload = () => {
           createUnityInstance(canvas, config, (progress) => {
-            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+            if (statusText) statusText.innerText = "Loading Game Assets...";
+            var fill = document.querySelector("#progress-fill");
+            if (fill) fill.style.width = (100 * progress) + "%";
           }).then((unityInstance) => {
-            document.querySelector("#unity-loading-bar").style.display = "none";
-            
-            var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-            if (fullscreenButton) {
-              fullscreenButton.onclick = () => {
-                unityInstance.SetFullscreen(1);
-              };
+            var customLoader = document.querySelector("#custom-loader");
+            if (customLoader) {
+              customLoader.style.opacity = "0";
+              setTimeout(() => {
+                customLoader.style.display = "none";
+              }, 500);
             }
           }).catch((message) => {
-            alert(message);
+            console.error("Unity Initialization Error:", message);
           });
         };
 
