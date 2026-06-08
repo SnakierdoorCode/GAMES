@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/wasm/d3wasm/">
+    <meta charset="utf-8">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            height: 100%;
+            width: 100%;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+<script>
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    preRun: [],
+    postRun: [],
+    print: function(text) { console.log(text); },
+    printErr: function(text) { console.error(text); }
+  };
+  window.onerror = function(event) {
+    console.error('Exception thrown: ', event);
+  };
+</script>
+<script async type="text/javascript" src="d3wasm.js"></script>
+</body>
+</html>
