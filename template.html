@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>The Choicer Voicer</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script>
+            window.loadCustomVoicePack = function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.zip';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        JSZip.loadAsync(event.target.result).then(async function(zip) {
+                            window.customPackFiles = {};
+                            for (let filename of Object.keys(zip.files)) {
+                                let zipEntry = zip.files[filename];
+                                if (!zipEntry.dir) {
+                                    let arrayBuffer = await zipEntry.async("arraybuffer");
+                                    window.customPackFiles[filename] = arrayBuffer;
+                                }
+                            }
+                            window.customPackLoaded = true;
+                            window.customPackName = file.name;
+                            console.log("Loaded pack:", file.name);
+                        });
+                    };
+                    reader.readAsArrayBuffer(file);
+                };
+                input.click();
+            };
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>
