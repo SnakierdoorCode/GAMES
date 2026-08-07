@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		<base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/SCPGAMEEXPORTED/">
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
 		<title>SCP: Refinarium</title>
@@ -92,6 +93,21 @@ body {
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>
+(function () {
+	const currentUrl = window.location.href;
+	const gitHubMatch = currentUrl.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/(?:blob|tree|raw)\/([^/]+)(?:\/(.*))?$/i);
+	if (!gitHubMatch) {
+		return;
+	}
+	const [, owner, repo, branch, relPath] = gitHubMatch;
+	const dirPath = (relPath || '').split('/').slice(0, -1).join('/');
+	const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${dirPath ? dirPath + '/' : ''}`;
+	const base = document.createElement('base');
+	base.href = rawBase;
+	document.head.appendChild(base);
+})();
+</script>
 
 	</head>
 	<body>
@@ -116,17 +132,47 @@ body {
 				'index.wasm': ['index.wasm.000', 'index.wasm.001', 'index.wasm.002', 'index.wasm.003'],
 			};
 			const originalFetch = window.fetch.bind(window);
+			const gitHubMatch = window.location.href.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/(blob|tree|raw)\/([^/]+)(?:\/(.*))?$/i);
+			let resolvedBase = null;
+
+			if (gitHubMatch) {
+				const [, owner, repo, kind, branch, relPath] = gitHubMatch;
+				const pathParts = (relPath || '').split('/').filter(Boolean);
+				let directoryPath = '';
+
+				if (kind.toLowerCase() === 'tree') {
+					directoryPath = pathParts.join('/');
+				} else if (pathParts.length > 1) {
+					pathParts.pop();
+					directoryPath = pathParts.join('/');
+				}
+
+				resolvedBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${directoryPath ? directoryPath + '/' : ''}`;
+			}
+
+			function resolveAssetUrl(url) {
+				if (!url || /^https?:\/\//i.test(url) || /^data:/i.test(url)) {
+					return url;
+				}
+				if (resolvedBase) {
+					return new URL(url, resolvedBase).toString();
+				}
+				return url;
+			}
 
 			window.fetch = function (resource, init) {
-				const requestUrl = typeof resource === 'string'
-					? new URL(resource, window.location.href)
-					: new URL(resource.url, window.location.href);
+				const resourceUrl = typeof resource === 'string'
+					? resource
+					: (resource && resource.url) || '';
+				const absoluteUrl = resolveAssetUrl(resourceUrl);
+				const requestUrl = new URL(absoluteUrl, window.location.href);
 				const fileName = decodeURIComponent(requestUrl.pathname.split('/').pop() || '');
 				const chunkNames = splitAssetMap[fileName];
 
 				if (chunkNames) {
 					return Promise.all(chunkNames.map((chunkName) => {
-						return originalFetch(chunkName, { credentials: 'same-origin' }).then((response) => {
+						const chunkUrl = resolveAssetUrl(chunkName);
+						return originalFetch(chunkUrl, init).then((response) => {
 							if (!response.ok) {
 								throw new Error(`Failed loading split asset '${chunkName}'`);
 							}
@@ -151,7 +197,7 @@ body {
 					});
 				}
 
-				return originalFetch(resource, init);
+				return originalFetch(absoluteUrl, init);
 			};
 		}());
 		</script>
