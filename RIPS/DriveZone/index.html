@@ -1,0 +1,78 @@
+<!--ripped by musashi-->
+<!-- on the universal stash-->
+
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Drive Zone</title>
+    <link rel="preconnect" href="https://bridge.playgama.com">
+    <link rel="preload" href="/Build/b098b1d93c47d262a7dc6492f585171b.wasm.unityweb" as="fetch" type="application/wasm" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    
+    <!-- Preload split data parts instead of the original combined file -->
+    <link rel="preload" href="/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1" as="fetch" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    <link rel="preload" href="/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2" as="fetch" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    
+    <link rel="preload" href="/Build/90b94b3c2cea1b5d647fd86e784e4681.framework.js.unityweb" as="script" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+        .fullscreen-canvas {
+            background: #242424;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+    </style>
+    <script src="https://www.youtube.com/game_api/v1" nonce="Jq-JXDUhlvAfM7fmDpariw"></script>
+</head>
+<body>
+    <canvas id="canvas" class="fullscreen-canvas"></canvas>
+
+    <script nonce="Jq-JXDUhlvAfM7fmDpariw">
+        // Helper function to download and combine split files into a Blob URL
+        async function loadCombinedDataUrl(parts) {
+            const buffers = await Promise.all(
+                parts.map(url => fetch(url).then(res => {
+                    if (!res.ok) throw new Error(`Failed to load ${url}: ${res.statusText}`);
+                    return res.arrayBuffer();
+                }))
+            );
+
+            // Calculate total size
+            const totalLength = buffers.reduce((acc, buf) => acc + buf.byteLength, 0);
+
+            // Merge array buffers into a single Uint8Array
+            const combinedArray = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const buffer of buffers) {
+                combinedArray.set(new Uint8Array(buffer), offset);
+                offset += buffer.byteLength;
+            }
+
+            // Create a Blob and generate an Object URL
+            const blob = new Blob([combinedArray], { type: 'application/octet-stream' });
+            return URL.createObjectURL(blob);
+        }
+
+        // List your split parts here in correct sequence
+        const dataParts = [
+            '/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1',
+            '/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2'
+        ];
+
+        // Combine parts before initializing Unity loader / Playgama Bridge
+        window.combinedDataUrlPromise = loadCombinedDataUrl(dataParts);
+    </script>
+
+    <!-- Playgama Bridge Script -->
+    <script src="./playgama-bridge-unity.js" nonce="Jq-JXDUhlvAfM7fmDpariw"></script>
+</body>
+</html>
