@@ -1,5 +1,5 @@
 <!--ripped by musashi-->
-<!-- on the universal stash-->
+<!--on the universal stash-->
 
 <!DOCTYPE html>
 <html lang="en-us">
@@ -8,13 +8,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Drive Zone</title>
     <link rel="preconnect" href="https://bridge.playgama.com">
-    <link rel="preload" href="/Build/b098b1d93c47d262a7dc6492f585171b.wasm.unityweb" as="fetch" type="application/wasm" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/b098b1d93c47d262a7dc6492f585171b.wasm.unityweb" as="fetch" type="application/wasm" crossorigin="">
     
-    <!-- Preload split data parts instead of the original combined file -->
-    <link rel="preload" href="/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1" as="fetch" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
-    <link rel="preload" href="/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2" as="fetch" crossorigin="" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    <!-- Preload split data parts -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1" as="fetch" crossorigin="">
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2" as="fetch" crossorigin="">
     
-    <link rel="preload" href="/Build/90b94b3c2cea1b5d647fd86e784e4681.framework.js.unityweb" as="script" nonce="Jq-JXDUhlvAfM7fmDpariw">
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/90b94b3c2cea1b5d647fd86e784e4681.framework.js.unityweb" as="script">
     <style>
         html, body {
             width: 100%;
@@ -31,13 +31,65 @@
             left: 0px;
         }
     </style>
-    <script src="https://www.youtube.com/game_api/v1" nonce="Jq-JXDUhlvAfM7fmDpariw"></script>
+    <script src="https://www.youtube.com/game_api/v1"></script>
+
+    <script>
+        const CDN_BASE = 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/';
+
+        const originalFetch = window.fetch;
+        window.fetch = function(input, init) {
+            if (typeof input === 'string') {
+                if (!input.startsWith('http://') && !input.startsWith('https://') && !input.startsWith('blob:')) {
+                    // Extract path relative to RIPS/DriveZone
+                    const cleanPath = input.replace(/^(\.\/|\/|file:\/\/\/.*?\/Build\/|file:\/\/\/.*?\/)/, '');
+                    if (cleanPath.startsWith('Build/')) {
+                        input = CDN_BASE + cleanPath;
+                    } else if (cleanPath.endsWith('.part1') || cleanPath.endsWith('.part2')) {
+                        input = CDN_BASE + 'Build/' + cleanPath;
+                    } else {
+                        input = CDN_BASE + cleanPath;
+                    }
+                }
+            }
+            return originalFetch.call(this, input, init);
+        };
+
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName, options) {
+            const element = originalCreateElement.call(document, tagName, options);
+            if (tagName.toLowerCase() === 'script') {
+                const redirectUrl = function(url) {
+                    if (!url || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
+                    const filename = url.split('/').pop();
+                    if (filename.endsWith('.loader.js')) {
+                        return CDN_BASE + 'Build/' + filename;
+                    }
+                    return CDN_BASE + filename;
+                };
+
+                const originalSetAttribute = element.setAttribute;
+                element.setAttribute = function(name, value) {
+                    if (name === 'src') value = redirectUrl(value);
+                    return originalSetAttribute.call(this, name, value);
+                };
+
+                Object.defineProperty(element, 'src', {
+                    set: function(url) {
+                        element.setAttribute('src', redirectUrl(url));
+                    },
+                    get: function() {
+                        return element.getAttribute('src');
+                    }
+                });
+            }
+            return element;
+        };
+    </script>
 </head>
 <body>
     <canvas id="canvas" class="fullscreen-canvas"></canvas>
 
-    <script nonce="Jq-JXDUhlvAfM7fmDpariw">
-        // Helper function to download and combine split files into a Blob URL
+    <script>
         async function loadCombinedDataUrl(parts) {
             const buffers = await Promise.all(
                 parts.map(url => fetch(url).then(res => {
@@ -46,10 +98,7 @@
                 }))
             );
 
-            // Calculate total size
             const totalLength = buffers.reduce((acc, buf) => acc + buf.byteLength, 0);
-
-            // Merge array buffers into a single Uint8Array
             const combinedArray = new Uint8Array(totalLength);
             let offset = 0;
             for (const buffer of buffers) {
@@ -57,22 +106,19 @@
                 offset += buffer.byteLength;
             }
 
-            // Create a Blob and generate an Object URL
             const blob = new Blob([combinedArray], { type: 'application/octet-stream' });
             return URL.createObjectURL(blob);
         }
 
-        // List your split parts here in correct sequence
         const dataParts = [
-            '/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1',
-            '/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2'
+            'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part1',
+            'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/Build/67d21dd6ddd827425bdc245f02f12be6.data.unityweb.part2'
         ];
 
-        // Combine parts before initializing Unity loader / Playgama Bridge
         window.combinedDataUrlPromise = loadCombinedDataUrl(dataParts);
     </script>
 
-    <!-- Playgama Bridge Script -->
-    <script src="./playgama-bridge-unity.js" nonce="Jq-JXDUhlvAfM7fmDpariw"></script>
+    <!-- Playgama Unity Bridge Wrapper Script -->
+    <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/DriveZone/playgama-bridge-unity.js"></script>
 </body>
 </html>
