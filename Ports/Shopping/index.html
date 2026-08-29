@@ -1,0 +1,43 @@
+<!--Ported by musashi-->
+<!--On The Universal Stash-->
+
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EXPERIMENT GROCERIES</title>
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #1A1A1A;
+      }
+      #unity-canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="unity-canvas"></canvas>
+    <script src="Build/shopexport.loader.js"></script>
+    <script>
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "Build/shopexport.data",
+        frameworkUrl: "Build/shopexport.framework.js",
+        codeUrl: "Build/shopexport.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "nihilanthGames",
+        productName: "EXPERIMENT GROCERIES",
+        productVersion: "0.1",
+        matchWebGLToCanvasSize: true,
+      });
+    </script>
+  </body>
+</html>
