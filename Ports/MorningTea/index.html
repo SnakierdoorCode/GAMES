@@ -90,9 +90,8 @@ body {
 	z-index: 1;
 }
 		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="the morning tea.icon.png" />
-<link rel="apple-touch-icon" href="the morning tea.apple-touch-icon.png"/>
-
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/index.icon.png" />
+		<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.apple-touch-icon.png"/>
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -104,25 +103,26 @@ body {
 		</noscript>
 
 		<div id="status">
-			<img id="status-splash" class="show-image--false fullsize--false use-filter--false" src="the morning tea.png" alt="">
+			<img id="status-splash" class="show-image--false fullsize--false use-filter--false" src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.png" alt="">
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
 
-		<script src="the morning tea.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"the morning tea","experimentalVK":false,"fileSizes":{"the morning tea.pck":24388688,"the morning tea.wasm":35754592},"gdextensionLibs":[],"godotPoolSize":4};
-const GODOT_THREADS_ENABLED = false;
-const engine = new Engine(GODOT_CONFIG);
+const CDN_BASE = "https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/";
+const PCK_NAME = "the morning tea.pck";
 
-// --- merge split files (wasm + pck each split into .part1/.part2) ---
-const SPLIT_FILES = ["the morning tea.wasm", "the morning tea.pck"];
-const mergedCache = {};
-
-async function mergeParts(name) {
+async function fetchAndMergeWasm() {
 	const [p1, p2] = await Promise.all([
-		fetch(name + ".part1").then(r => r.arrayBuffer()),
-		fetch(name + ".part2").then(r => r.arrayBuffer())
+		fetch("https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.wasm.part1").then(r => {
+			if (!r.ok) throw new Error(`Failed WASM Part 1 (${r.status})`);
+			return r.arrayBuffer();
+		}),
+		fetch("https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.wasm.part2").then(r => {
+			if (!r.ok) throw new Error(`Failed WASM Part 2 (${r.status})`);
+			return r.arrayBuffer();
+		})
 	]);
 	const buf = new Uint8Array(p1.byteLength + p2.byteLength);
 	buf.set(new Uint8Array(p1), 0);
@@ -130,18 +130,22 @@ async function mergeParts(name) {
 	return buf.buffer;
 }
 
-const realFetch = window.fetch.bind(window);
-window.fetch = async function (input, init) {
-	const url = typeof input === "string" ? input : input.url;
-	const match = SPLIT_FILES.find(f => url.endsWith(f));
-	if (match) {
-		if (!mergedCache[match]) mergedCache[match] = await mergeParts(match);
-		const type = match.endsWith(".wasm") ? "application/wasm" : "application/octet-stream";
-		return new Response(mergedCache[match], { headers: { "Content-Type": type } });
-	}
-	return realFetch(input, init);
-};
-// --- end merge ---
+async function fetchAndMergePck() {
+	const [p1, p2] = await Promise.all([
+		fetch("https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.pck.part1").then(r => {
+			if (!r.ok) throw new Error(`Failed PCK Part 1 (${r.status})`);
+			return r.arrayBuffer();
+		}),
+		fetch("https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/MorningTea/the%20morning%20tea.pck.part2").then(r => {
+			if (!r.ok) throw new Error(`Failed PCK Part 2 (${r.status})`);
+			return r.arrayBuffer();
+		})
+	]);
+	const buf = new Uint8Array(p1.byteLength + p2.byteLength);
+	buf.set(new Uint8Array(p1), 0);
+	buf.set(new Uint8Array(p2), p1.byteLength);
+	return buf.buffer;
+}
 
 (function () {
 	const statusOverlay = document.getElementById('status');
@@ -152,9 +156,7 @@ window.fetch = async function (input, init) {
 	let statusMode = '';
 
 	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
+		if (statusMode === mode || !initializing) return;
 		if (mode === 'hidden') {
 			statusOverlay.remove();
 			initializing = false;
@@ -190,53 +192,66 @@ window.fetch = async function (input, init) {
 		initializing = false;
 	}
 
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
-
-	if (missing.length !== 0) {
-		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			let serviceWorkerRegistrationPromise;
-			try {
-				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
-			} catch (err) {
-				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
-			}
-			Promise.race([
-				serviceWorkerRegistrationPromise.then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).then(() => {
-				window.location.reload();
-			}).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			});
-		} else {
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
-		}
-	} else {
+	async function bootGame() {
 		setStatusMode('progress');
-		engine.startGame({
-			'onProgress': function (current, total) {
-				if (current > 0 && total > 0) {
-					statusProgress.value = current;
-					statusProgress.max = total;
-				} else {
-					statusProgress.removeAttribute('value');
-					statusProgress.removeAttribute('max');
+		try {
+
+			const [wasmBuffer, pckBuffer] = await Promise.all([
+				fetchAndMergeWasm(),
+				fetchAndMergePck()
+			]);
+
+			const originalFetch = window.fetch;
+			window.fetch = function (input, init) {
+				const url = typeof input === 'string' ? input : (input && input.url);
+				if (url && url.endsWith('.wasm')) {
+					return Promise.resolve(new Response(wasmBuffer.slice(0), {
+						status: 200,
+						headers: { 'Content-Type': 'application/wasm' }
+					}));
 				}
-			},
-		}).then(() => {
+				return originalFetch(input, init);
+			};
+
+			const GODOT_CONFIG = {
+				"args": ["--main-pack", PCK_NAME],
+				"canvasResizePolicy":2,
+				"emscriptenPoolSize":8,
+				"ensureCrossOriginIsolationHeaders":false,
+				"executable": CDN_BASE + "the%20morning%20tea",
+				"mainPack": PCK_NAME,
+				"experimentalVK":false,
+				"gdextensionLibs":[],
+				"godotPoolSize":4
+			};
+
+			const engine = new Engine(GODOT_CONFIG);
+
+			await engine.init(CDN_BASE + "the%20morning%20tea");
+
+			await engine.preloadFile(new Uint8Array(pckBuffer), PCK_NAME);
+
+			await engine.start({
+				'onProgress': function (current, total) {
+					if (current > 0 && total > 0) {
+						statusProgress.value = current;
+						statusProgress.max = total;
+					} else {
+						statusProgress.removeAttribute('value');
+						statusProgress.removeAttribute('max');
+					}
+				},
+			});
+
+			window.fetch = originalFetch;
+
 			setStatusMode('hidden');
-		}, displayFailureNotice);
+		} catch (err) {
+			displayFailureNotice(err);
+		}
 	}
+
+	bootGame();
 }());
 		</script>
 	</body>
