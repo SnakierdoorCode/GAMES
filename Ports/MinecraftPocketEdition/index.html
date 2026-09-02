@@ -1,0 +1,31 @@
+<!doctypehtml>
+<html lang=en>
+
+<head>
+    <meta charset=utf-8>
+    <base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/wasm/mcpe/">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name=viewport>
+    <meta content=yes name=apple-mobile-web-app-capable>
+    <meta content=black-translucent name=apple-mobile-web-app-status-bar-style>
+    <meta content=yes name=mobile-web-app-capable>
+    <title>Minecraft PE</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}body,html{width:100%;height:100%;background:#000;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#canvas{display:block;width:100vw;height:100dvh;cursor:crosshair;image-rendering:pixelated;image-rendering:crisp-edges;-webkit-tap-highlight-color:transparent;touch-action:none}#overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#eee;font-family:sans-serif;z-index:10;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}#overlay.hidden{display:none}#status{margin-bottom:12px;font-size:clamp(13px, 3.5vw, 18px);color:#aaa;text-align:center;padding:0 16px}#progress{width:min(300px,75vw);height:6px;background:#333;border-radius:4px;overflow:hidden}#progress-bar{height:100%;width:0;background:#5c9;transition:width .2s ease}
+    </style>
+</head>
+
+<body>
+    <div id=overlay>
+        <div id=status>Loading…</div>
+        <div id=progress>
+            <div id=progress-bar></div>
+        </div>
+    </div>
+    <canvas id=canvas oncontextmenu=event.preventDefault()></canvas>
+    <script>
+        var canvas=document.getElementById("canvas"),overlay=document.getElementById("overlay");function resizeCanvas(){canvas.width=window.innerWidth,canvas.height=window.innerHeight}resizeCanvas(),window.addEventListener("resize",resizeCanvas),document.addEventListener("pointerlockchange",(function(){canvas.style.cursor=document.pointerLockElement===canvas?"none":"default"}));var Module={canvas:canvas,onRuntimeInitialized:function(){var e=GL.makeContextCurrent.bind(GL);GL.makeContextCurrent=function(n){var t=e(n);if(n&&"undefined"!=typeof GLctx&&GLctx)try{Browser.useWebGL=!0,GLImmediate.initted=!1,GLImmediate.init(),console.log("GLImmediate re-initialised, matrix len="+GLImmediate.matrix.length)}catch(e){console.error("GLImmediate re-init error:",e)}return t}},print:function(e){console.log(e)},printErr:function(e){console.warn(e)},setStatus:function(e){document.getElementById("status").textContent=e||"Running"},monitorRunDependencies:function(e){var n=e>0?Math.max(0,100-5*e):100;document.getElementById("progress-bar").style.width=n+"%",0===e&&overlay.classList.add("hidden")}}
+    </script>
+    <script async src=mcpe.js></script>
+</body>
+
+</html>
