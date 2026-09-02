@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="utf-8">
+<base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/unity/adofai/">
+<title>A Dance of Fire And Ice</title>
+
+<style>
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+#gameContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#gameContainer canvas {
+    display: block;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+</style>
+
+<script src="Build/UnityLoader.js"></script>
+</head>
+
+<body>
+<div id="gameContainer"></div>
+
+<script>
+var gameInstance = UnityLoader.instantiate(
+    "gameContainer",
+    "Build/adofaiii4.json"
+);
+
+function forceFullscreen() {
+    const canvas = document.querySelector("#gameContainer canvas");
+    if (!canvas) return;
+
+    canvas.style.width = "100vw";
+    canvas.style.height = "100vh";
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", forceFullscreen);
+
+// Keep forcing it because some Unity versions reset the size.
+setInterval(forceFullscreen, 100);
+</script>
+
+</body>
+</html>
