@@ -1,3 +1,6 @@
+<!--ripped by musashi-->
+<!-- on the universal stash-->
+
 <!DOCTYPE html>
 <html lang="en-us">
 
@@ -5,39 +8,82 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>ScreamJam</title>
-    <script src="Build/UnityLoader.js"></script>
+
     <script>
+        // Base CDN URL using jsDelivr to avoid CORS and MIME issues
+        var BASE_CDN = "https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/OfficeHours/";
+
+        function getCdnUrl(relativePath) {
+            var cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+            return BASE_CDN + cleanPath;
+        }
+
+        // Dynamically load UnityLoader.js
+        (function loadUnityLoader() {
+            var script = document.createElement("script");
+            script.src = getCdnUrl("Build/UnityLoader.js");
+            script.onload = function () {
+                loadGame();
+            };
+            script.onerror = function () {
+                console.warn("jsDelivr failed. Trying raw GitHub CDN fallback...");
+                var fallbackScript = document.createElement("script");
+                fallbackScript.src = "https://raw.githubusercontent.com/SnakierdoorCode/GAMES/main/RIPS/OfficeHours/Build/UnityLoader.js";
+                fallbackScript.onload = loadGame;
+                fallbackScript.onerror = function () {
+                    console.error("Failed to load UnityLoader.js from CDN.");
+                };
+                document.head.appendChild(fallbackScript);
+            };
+            document.head.appendChild(script);
+        })();
+
         var gameInstance;
 
         async function loadGame() {
             var parts = [
-                "Build/officeHoursWebGLfaster.data.unityweb.part1",
-                "Build/officeHoursWebGLfaster.data.unityweb.part2"
+                getCdnUrl("Build/officeHoursWebGLfaster.data.unityweb.part1"),
+                getCdnUrl("Build/officeHoursWebGLfaster.data.unityweb.part2")
             ];
 
             try {
-                var responses = await Promise.all(parts.map(url => fetch(url).then(r => r.arrayBuffer())));
-                var totalLength = responses.reduce((acc, buf) => acc + buf.byteLength, 0);
+                // Fetch both parts in parallel
+                var responses = await Promise.all(parts.map(function (url) {
+                    return fetch(url).then(function (r) {
+                        if (!r.ok) throw new Error("HTTP error " + r.status + " fetching " + url);
+                        return r.arrayBuffer();
+                    });
+                }));
 
+                // Calculate total size & stitch buffers together
+                var totalLength = responses.reduce(function (acc, buf) { return acc + buf.byteLength; }, 0);
                 var combinedBuffer = new Uint8Array(totalLength);
                 var offset = 0;
-                for (var buf of responses) {
-                    combinedBuffer.set(new Uint8Array(buf), offset);
-                    offset += buf.byteLength;
+
+                for (var i = 0; i < responses.length; i++) {
+                    combinedBuffer.set(new Uint8Array(responses[i]), offset);
+                    offset += responses[i].byteLength;
                 }
 
+                // Create blob URL for merged data
                 var blob = new Blob([combinedBuffer], { type: "application/octet-stream" });
                 var dataUrl = URL.createObjectURL(blob);
+                var jsonUrl = getCdnUrl("Build/officeHoursWebGLfaster.json");
 
-                gameInstance = UnityLoader.instantiate("gameContainer", "Build/officeHoursWebGLfaster.json", {
+                // Initialize Unity with expanded memory limit and CDN asset router
+                gameInstance = UnityLoader.instantiate("gameContainer", jsonUrl, {
                     Module: {
-                        dataUrl: dataUrl
+                        TOTAL_MEMORY: 268435456, // Allocates 256MB WebAssembly heap (Default is usually 128MB)
+                        dataUrl: dataUrl,
+                        locateFile: function (path) {
+                            return getCdnUrl("Build/" + path);
+                        }
                     }
                 });
 
                 onResize();
             } catch (err) {
-                console.error("Failed to load or merge split game data files:", err);
+                console.error("Failed to load or merge game files from CDN:", err);
             }
         }
 
@@ -53,11 +99,9 @@
             var w, h;
 
             if (windowAspect > targetAspect) {
-                // Window is wider than 16:9 -> fit to height
                 h = windowHeight;
                 w = h * targetAspect;
             } else {
-                // Window is taller than 16:9 -> fit to width
                 w = windowWidth;
                 h = w / targetAspect;
             }
@@ -65,7 +109,6 @@
             container.style.width = Math.floor(w) + "px";
             container.style.height = Math.floor(h) + "px";
 
-            // If canvas exists inside container, match its internal frame dimensions
             var canvas = container.querySelector("canvas");
             if (canvas) {
                 canvas.style.width = Math.floor(w) + "px";
@@ -115,7 +158,7 @@
     </style>
 </head>
 
-<body onload="loadGame();">
+<body>
     <div id="gameContainer" data-pixelated=""></div>
 </body>
 
