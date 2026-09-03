@@ -1,6 +1,5 @@
 <!--ripped by musashi-->
 <!-- on the universal stash-->
-
 <!DOCTYPE html>
 <html lang="en-us">
 
@@ -10,7 +9,6 @@
     <title>ScreamJam</title>
 
     <script>
-        // Base CDN URL using jsDelivr to avoid CORS and MIME issues
         var BASE_CDN = "https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/RIPS/OfficeHours/";
 
         function getCdnUrl(relativePath) {
@@ -18,7 +16,6 @@
             return BASE_CDN + cleanPath;
         }
 
-        // Dynamically load UnityLoader.js
         (function loadUnityLoader() {
             var script = document.createElement("script");
             script.src = getCdnUrl("Build/UnityLoader.js");
@@ -47,7 +44,6 @@
             ];
 
             try {
-                // Fetch both parts in parallel
                 var responses = await Promise.all(parts.map(function (url) {
                     return fetch(url).then(function (r) {
                         if (!r.ok) throw new Error("HTTP error " + r.status + " fetching " + url);
@@ -55,7 +51,6 @@
                     });
                 }));
 
-                // Calculate total size & stitch buffers together
                 var totalLength = responses.reduce(function (acc, buf) { return acc + buf.byteLength; }, 0);
                 var combinedBuffer = new Uint8Array(totalLength);
                 var offset = 0;
@@ -65,83 +60,54 @@
                     offset += responses[i].byteLength;
                 }
 
-                // Create blob URL for merged data
                 var blob = new Blob([combinedBuffer], { type: "application/octet-stream" });
                 var dataUrl = URL.createObjectURL(blob);
                 var jsonUrl = getCdnUrl("Build/officeHoursWebGLfaster.json");
 
-                // Initialize Unity with expanded memory limit and CDN asset router
                 gameInstance = UnityLoader.instantiate("gameContainer", jsonUrl, {
                     Module: {
-                        TOTAL_MEMORY: 268435456, // Allocates 256MB WebAssembly heap (Default is usually 128MB)
+                        TOTAL_MEMORY: 268435456,
                         dataUrl: dataUrl,
                         locateFile: function (path) {
                             return getCdnUrl("Build/" + path);
                         }
                     }
                 });
-
-                onResize();
             } catch (err) {
                 console.error("Failed to load or merge game files from CDN:", err);
             }
         }
-
-        function onResize() {
-            var container = document.getElementById("gameContainer");
-            if (!container) return;
-
-            var windowWidth = window.innerWidth;
-            var windowHeight = window.innerHeight;
-            var targetAspect = 16 / 9;
-            var windowAspect = windowWidth / windowHeight;
-
-            var w, h;
-
-            if (windowAspect > targetAspect) {
-                h = windowHeight;
-                w = h * targetAspect;
-            } else {
-                w = windowWidth;
-                h = w / targetAspect;
-            }
-
-            container.style.width = Math.floor(w) + "px";
-            container.style.height = Math.floor(h) + "px";
-
-            var canvas = container.querySelector("canvas");
-            if (canvas) {
-                canvas.style.width = Math.floor(w) + "px";
-                canvas.style.height = Math.floor(h) + "px";
-            }
-        }
-
-        window.addEventListener('resize', onResize);
     </script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         html,
         body {
             background: #000;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden !important;
             padding: 0;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         #gameContainer {
-            width: 100%;
-            height: 100%;
-            position: relative;
+            width: 100vw !important;
+            height: 100vh !important;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         #gameContainer canvas {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100vw !important;
+            height: 100vh !important;
             display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         div#gameContainer[data-pixelated='true'] canvas {
