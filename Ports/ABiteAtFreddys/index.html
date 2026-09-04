@@ -1,3 +1,6 @@
+<!--ripped by musashi-->
+<!--On The Universal Stash-->
+
 <!DOCTYPE html>
 <html xmlns='http://www.w3.org/1999/xhtml' lang='' xml:lang=''>
 <head>
@@ -110,8 +113,8 @@
             padding: 4px 6px;
         }
     </style>
-<link id='-gd-engine-icon' rel='icon' type='image/png' href='index.icon.png' />
-<link rel='apple-touch-icon' href='index.apple-touch-icon.png'/>
+<link id='-gd-engine-icon' rel='icon' type='image/png' href='https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/ABiteAtFreddys/index.icon.png' />
+<link rel='apple-touch-icon' href='https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/ABiteAtFreddys/index.apple-touch-icon.png'/>
 
 </head>
 <body>
@@ -134,15 +137,17 @@
         <div id='status-notice' class='godot' style='display: none;'></div>
     </div>
 
-    <script type='text/javascript' src='index.js'></script>
     <script type='text/javascript'>//<![CDATA[
 
+        const CDN_BASE = 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/ABiteAtFreddys/';
         const originalFetch = window.fetch;
+        const originalXHR = window.XMLHttpRequest.prototype.open;
+
         const TOTAL_PCK_SIZE = 330997728;
         const GODOT_CONFIG = {
             "args": [],
             "canvasResizePolicy": 2,
-            "executable": "index",
+            "executable": CDN_BASE + "index",
             "experimentalVK": false,
             "fileSizes": {
                 "index.pck": TOTAL_PCK_SIZE,
@@ -151,6 +156,25 @@
             "focusCanvas": true,
             "gdnativeLibs": []
         };
+
+        // Intercept XMLHttpRequest calls made by Emscripten
+        window.XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+            let targetUrl = url;
+            if (typeof targetUrl === 'string' && !targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+                targetUrl = CDN_BASE + targetUrl;
+            }
+            return originalXHR.call(this, method, targetUrl, async, user, password);
+        };
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = () => reject(new Error(`Failed to load script ${src}`));
+                document.head.appendChild(s);
+            });
+        }
 
         (function() {
             const INDETERMINATE_STATUS_STEP_MS = 100;
@@ -232,11 +256,11 @@
 
                 for (let i = 1; i <= partCount; i++) {
                     const partNum = String(i).padStart(2, '0');
-                    const fileName = `index.pck.part${partNum}`;
+                    const fileUrl = `${CDN_BASE}index.pck.part${partNum}`;
 
-                    const response = await originalFetch(fileName);
+                    const response = await originalFetch(fileUrl);
                     if (!response.ok) {
-                        throw new Error(`Failed to load ${fileName} (${response.statusText})`);
+                        throw new Error(`Failed to load part ${partNum} (${response.statusText})`);
                     }
                     const buffer = await response.arrayBuffer();
                     chunks.push(buffer);
@@ -252,15 +276,31 @@
                 return await combinedBlob.arrayBuffer();
             }
 
-            if (!Engine.isWebGLAvailable()) {
+            function isWebGLAvailable() {
+                try {
+                    const testCanvas = document.createElement('canvas');
+                    return !!(window.WebGLRenderingContext && 
+                        (testCanvas.getContext('webgl2') || 
+                         testCanvas.getContext('webgl') || 
+                         testCanvas.getContext('experimental-webgl')));
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            if (!isWebGLAvailable()) {
                 displayFailureNotice('WebGL not available');
             } else {
                 setStatusMode('indeterminate');
 
-                fetchAndCombinePckParts(18).then(pckArrayBuffer => {
-                    // Intercept network requests for index.pck and respond with the stitched ArrayBuffer
+                // Load index.js dynamically from CDN first
+                loadScript(CDN_BASE + 'index.js').then(() => {
+                    return fetchAndCombinePckParts(18);
+                }).then(pckArrayBuffer => {
+                    // Intercept fetch requests
                     window.fetch = function(url, options) {
                         const urlString = typeof url === 'string' ? url : (url.url || String(url));
+
                         if (urlString.includes('index.pck')) {
                             return Promise.resolve(new Response(pckArrayBuffer.slice(0), {
                                 status: 200,
@@ -270,12 +310,16 @@
                                 }
                             }));
                         }
+
+                        if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                            return originalFetch(CDN_BASE + urlString, options);
+                        }
+
                         return originalFetch(url, options);
                     };
 
                     var engine = new Engine(GODOT_CONFIG);
 
-                    // Let engine.startGame() handle the fetch internally via the overridden window.fetch
                     return engine.startGame({
                         'onProgress': function (current, total) {
                             if (total > 0) {
