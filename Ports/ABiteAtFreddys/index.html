@@ -1,15 +1,17 @@
 <!--ripped by musashi-->
 <!--On The Universal Stash-->
-
 <!DOCTYPE html>
 <html xmlns='http://www.w3.org/1999/xhtml' lang='' xml:lang=''>
 <head>
     <meta charset='utf-8' />
-    <meta name='viewport' content='width=device-width, user-scalable=no' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
     <title>ABaF</title>
     <style type='text/css'>
 
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             touch-action: none;
             margin: 0;
             border: 0 none;
@@ -19,6 +21,11 @@
         }
 
         #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
             display: block;
             margin: 0;
             color: white;
@@ -51,6 +58,7 @@
             align-items: center;
             /* don't consume click events - make children visible explicitly */
             visibility: hidden;
+            z-index: 10;
         }
 
         #status-progress {
@@ -146,7 +154,7 @@
         const TOTAL_PCK_SIZE = 330997728;
         const GODOT_CONFIG = {
             "args": [],
-            "canvasResizePolicy": 2,
+            "canvasResizePolicy": 1,
             "executable": CDN_BASE + "index",
             "experimentalVK": false,
             "fileSizes": {
