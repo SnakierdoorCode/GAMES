@@ -125,11 +125,14 @@ const GODOT_CONFIG = {
 };
 const GODOT_THREADS_ENABLED = false;
 
+// Base CDN URL pointing directly to where the split files reside
+const BASE_CDN_URL = 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/';
+
 async function fetchAndMergeBuffer(baseName, totalParts, useZeroPadding = false) {
     const chunks = [];
     for (let i = 1; i <= totalParts; i++) {
         const partNumber = (useZeroPadding && i < 10) ? `0${i}` : `${i}`;
-        const partName = `${baseName}.part${partNumber}`;
+        const partName = `${BASE_CDN_URL}${baseName}.part${partNumber}`;
 
         const response = await fetch(partName);
         if (!response.ok) {
