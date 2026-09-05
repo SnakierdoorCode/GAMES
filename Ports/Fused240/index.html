@@ -93,8 +93,8 @@ body {
     z-index: 1;
 }
         </style>
-        <link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-        <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+        <link id="-gd-engine-icon" rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/index.icon.png" />
+        <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/index.apple-touch-icon.png"/>
     </head>
     <body>
         <canvas id="canvas">
@@ -106,13 +106,24 @@ body {
         </noscript>
 
         <div id="status">
-            <img id="status-splash" class="show-image--false fullsize--true use-filter--true" src="index.png" alt="">
+            <img id="status-splash" class="show-image--false fullsize--true use-filter--true" src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/index.png" alt="">
             <progress id="status-progress"></progress>
             <div id="status-notice"></div>
         </div>
 
-        <script src="index.js"></script>
         <script>
+// Base CDN configuration
+const CDN_DOMAIN = 'https://cdn.jsdelivr.net';
+const GAME_PATH = '/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/';
+const BASE_CDN_URL = `${CDN_DOMAIN}${GAME_PATH}`;
+
+// Dynamically inject index.js from CDN before starting the engine
+const engineScript = document.createElement('script');
+engineScript.src = `${BASE_CDN_URL}index.js`;
+engineScript.onload = () => initEngine();
+engineScript.onerror = () => console.error("Failed to load engine script from CDN.");
+document.head.appendChild(engineScript);
+
 const GODOT_CONFIG = {
     "args": [],
     "canvasResizePolicy": 2,
@@ -124,9 +135,6 @@ const GODOT_CONFIG = {
     "gdextensionLibs": []
 };
 const GODOT_THREADS_ENABLED = false;
-
-// Base CDN URL pointing directly to where the split files reside
-const BASE_CDN_URL = 'https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/';
 
 async function fetchAndMergeBuffer(baseName, totalParts, useZeroPadding = false) {
     const chunks = [];
@@ -151,7 +159,7 @@ async function fetchAndMergeBuffer(baseName, totalParts, useZeroPadding = false)
     return combined.buffer;
 }
 
-(async function () {
+async function initEngine() {
     const statusOverlay = document.getElementById('status');
     const statusProgress = document.getElementById('status-progress');
     const statusNotice = document.getElementById('status-notice');
@@ -235,7 +243,7 @@ async function fetchAndMergeBuffer(baseName, totalParts, useZeroPadding = false)
     } catch (err) {
         displayFailureNotice(err);
     }
-}());
+}
         </script>
     </body>
 </html>
