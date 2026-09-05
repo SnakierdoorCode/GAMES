@@ -111,18 +111,13 @@ body {
             <div id="status-notice"></div>
         </div>
 
+        <!-- Direct CDN link for index.js -->
+        <script src="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/index.js"></script>
+
         <script>
-// Base CDN configuration
 const CDN_DOMAIN = 'https://cdn.jsdelivr.net';
 const GAME_PATH = '/gh/SnakierdoorCode/GAMES@main/Ports/Fused240/';
 const BASE_CDN_URL = `${CDN_DOMAIN}${GAME_PATH}`;
-
-// Dynamically inject index.js from CDN before starting the engine
-const engineScript = document.createElement('script');
-engineScript.src = `${BASE_CDN_URL}index.js`;
-engineScript.onload = () => initEngine();
-engineScript.onerror = () => console.error("Failed to load engine script from CDN.");
-document.head.appendChild(engineScript);
 
 const GODOT_CONFIG = {
     "args": [],
@@ -159,7 +154,7 @@ async function fetchAndMergeBuffer(baseName, totalParts, useZeroPadding = false)
     return combined.buffer;
 }
 
-async function initEngine() {
+(async function () {
     const statusOverlay = document.getElementById('status');
     const statusProgress = document.getElementById('status-progress');
     const statusNotice = document.getElementById('status-notice');
@@ -243,7 +238,7 @@ async function initEngine() {
     } catch (err) {
         displayFailureNotice(err);
     }
-}
+}());
         </script>
     </body>
 </html>
