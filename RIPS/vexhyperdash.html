@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<base href="https://cdn.jsdelivr.net/gh/FusionzzzFr/Holy-Moly-Rips@main/Vex/Vex%20Hyper%20Dash/">
+<script>
+(function(){
+  var origCreate = document.createElement;
+  document.createElement = function(tag) {
+    var el = origCreate.call(document, tag);
+    if (tag && tag.toLowerCase() === 'script') {
+      var origSrcDesc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+      Object.defineProperty(el, 'src', {
+        configurable: true, enumerable: true,
+        get: function() { return origSrcDesc.get.call(this); },
+        set: function(v) {
+          if (typeof v === 'string' && /gamedistribution\.com/i.test(v)) { console.log('[GD Blocker] Blocked:', v); return; }
+          origSrcDesc.set.call(this, v);
+        }
+      });
+    }
+    return el;
+  };
+  var origFetch = window.fetch;
+  window.fetch = function(url, opts) {
+    if (typeof url === 'string' && /gamedistribution\.com/i.test(url)) return Promise.resolve(new Response('', { status: 200 }));
+    return origFetch.apply(this, arguments);
+  };
+  var origXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(m, url) {
+    if (typeof url === 'string' && /gamedistribution\.com/i.test(url)) return;
+    return origXHROpen.apply(this, arguments);
+  };
+  var _realSDK = null, _patchedSDK = null;
+  var resolveMethods = { 'onLoadStart':1,'onAdProviderLoaded':1,'onLoadComplete':1,'showInterstitialAd':1,'showRewardedAd':1,'preloadAd':1,'onLoadProgress':1,'onGameStart':1,'gameLoadingStart':1,'gameLoadingFinished':1,'gameplayStart':1,'gameplayStop':1 };
+  function patchSDK(sdk) {
+    if (!sdk) return sdk;
+    var adsMock = { isAdPlaying:function(){return false} };
+    return new Proxy(sdk, { get: function(t, p) {
+      if (p === 'ads') return adsMock;
+      var v = t[p];
+      if (typeof v !== 'function') return v;
+      return function() {
+        if (p==='isAdProviderLoaded') return true;
+        if (p==='isAdPlaying') return false;
+        if (resolveMethods[p]) return Promise.resolve();
+        try { return v.apply(t, arguments); } catch(e) { return Promise.resolve(); }
+      };
+    }});
+  }
+  var _fallbackSDK = { isAdPlaying:function(){return false}, isAdProviderLoaded:function(){return true}, onLoadStart:function(){return Promise.resolve()}, onAdProviderLoaded:function(){return Promise.resolve()}, onLoadComplete:function(){return Promise.resolve()}, showInterstitialAd:function(){return Promise.resolve()}, showRewardedAd:function(){return Promise.resolve({rewarded:false})}, preloadAd:function(){return Promise.resolve()}, onLoadProgress:function(){}, onGameStart:function(){return Promise.resolve()}, onGameEnd:function(){return Promise.resolve()}, gameLoadingStart:function(){}, gameLoadingFinished:function(){}, gameplayStart:function(){}, gameplayStop:function(){}, addListeners:function(){}, init:function(){}, ads:{isAdPlaying:function(){return false}} };
+  Object.defineProperty(window, '_azerionIntegrationSDK', {
+    configurable: true, enumerable: true,
+    get: function() { return _patchedSDK || _realSDK || _fallbackSDK; },
+    set: function(v) { _realSDK = v; if (v && typeof v==='object') _patchedSDK = patchSDK(v); }
+  });
+  window.PokiSDK = window.PokiSDK || { init:function(){return Promise.resolve()},commercialBreak:function(){return Promise.resolve()},rewardedBreak:function(){return Promise.resolve()},gameLoadingStart:function(){},gameLoadingFinished:function(){},gameplayStart:function(){},gameplayStop:function(){},happyTime:function(){},displayAd:function(){return Promise.resolve()},destroyAd:function(){},getURLParam:function(){return""} };
+  var gdStub = { init:function(){}, showAd:function(c){if(c)c()}, showReward:function(c){if(c)c()}, SHOW_ADS:false };
+  window.GameDistribution = gdStub;
+  Object.defineProperty(window,'GameDistribution',{configurable:false,enumerable:true,get:function(){return gdStub},set:function(){}});
+  window.adsbygoogle = window.adsbygoogle || [];
+  var _realAzInt = null;
+  var _azIntProxy = new Proxy({}, {
+    get: function(target, prop) {
+      if (prop === 'advType') return 'af';
+      if (prop === 'gdId') return '00000';
+      if (prop === 'playBtn') return false;
+      if (prop === 'bd') return 0;
+      return target[prop];
+    },
+    set: function(target, prop, val) { target[prop] = val; return true; }
+  });
+  Object.defineProperty(window, '_azerionIntegration', {
+    configurable: true, enumerable: true,
+    get: function() { return _azIntProxy; },
+    set: function(val) { _realAzInt = val; if (val && typeof val === 'object') { for (var k in val) { _azIntProxy[k] = val[k]; } _azIntProxy.advType = 'af'; _azIntProxy.gdId = '00000'; } }
+  });
+  function h5Stub(d){return new Proxy(function(){},{get:function(t,p){if(p==="then")return function(r,j){var next=h5Stub(d);try{r&&r(next)}catch(e){j&&j(e)}return next};if(typeof p==="symbol")return undefined;if(!(p in t)){t[p]=h5Stub(d)}return t[p]},apply:function(){return h5Stub(d)}})}
+  window.h5branding=window.h5branding||h5Stub();
+  window.h5branding.Hosts=window.h5branding.Hosts||{};
+  window.h5branding.Hosts.isBloodFree=function(){return true};
+})();
+</script>
+<meta charset="UTF-8"/>
+<link rel="stylesheet" href="./style.css">
+<div style="font-family:custom; position:absolute; left:-1000px; visibility:hidden;">.</div>
+<link rel="icon" type="image/png" href="./public/favicon.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vex Hyper Dash</title>
+<link rel="stylesheet" href="assets/css/aeria_ymenu.css"/>
+<script src="https://assets.msn.com/staticsb/statics/latest/msstart-games-sdk/msstart-v1.0.0-rc.20.min.js"></script>
+<script src="azerion-libs.js" defer="defer"></script>
+<script src="azerion-integration-sdk.js" defer="defer"></script>
+<script defer="defer" src="./game.min.js"></script>
+</head>
+<body>
+<header role="banner" id="menu-header">
+<div class="drawer-header">
+<button type="button" id="menu-button" class="drawer-toggle drawer-hamburger"></button>
+</div>
+<div id="menu-content" class="drawer-main" style="left: -300px">
+<div class="side-menu" id="side-menu" style="transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(0px, 0px) translateZ(0px);">
+<iframe id="menu_yg" src="https://frame.games.yahoo.co.jp/AE/menu/pc/null" scrolling="yes" frameborder="0" seamless=""></iframe>
+</div>
+</div>
+</header>
+<div id="app">
+<div id="game-container"></div>
+</div>
+<div id="loader">Loading...</div>
+</body>
+</html>
