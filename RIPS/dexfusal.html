@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
@@ -1504,4 +1505,118 @@
       }
 
       function create_color_elem(definition, config, prefixId) {
-        const value = get_initial_value(definition, conf... (5 KB left)
+        const value = get_initial_value(definition, config);
+
+        const bgrColor = value;
+        const r = (bgrColor & 0x0000ff);
+        const g = (bgrColor & 0x00ff00) >> 8;
+        const b = (bgrColor & 0xff0000) >> 16;
+        const rgbColor = (r << 16) + (g << 8) + b;
+        const color = "#" + rgbColor.toString(16).padStart(6, '0');
+
+        const colorElem = document.createElement("input");
+        colorElem.type = "color";
+        colorElem.value = color;
+
+        config[definition.name] = value;
+        function color_value_updated(e) {
+          const color = e.target.value;
+          const rgbColor = parseInt(color.slice(1), 16);
+          const r = (rgbColor & 0xff0000) >> 16;
+          const g = (rgbColor & 0x00ff00) >> 8;
+          const b = (rgbColor & 0x0000ff);
+          const bgrColor = (b << 16) + (g << 8) + r;
+
+          config[definition.name] = bgrColor;
+          notify_config_change();
+        }
+
+        colorElem.addEventListener("change", color_value_updated, false);
+        colorElem.addEventListener("input", color_value_updated, false);
+        
+        return wrap_with_label(colorElem, definition, prefixId);
+      }
+
+      function create_text_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const textElem = document.createElement("input");
+        textElem.type = "text";
+        textElem.value = value;
+        console.log("text", value)
+        if (definition.max_length && definition.max_length > 0) {
+          textElem.maxLength = definition.max_length;
+        }
+
+        config[definition.name] = value;
+        textElem.addEventListener("input", (e) => {
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(textElem, definition, prefixId);
+      }
+
+      function create_multiline_text_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const textareaElem = document.createElement("textarea");
+        textareaElem.rows = 5;
+        textareaElem.cols = 50;
+        textareaElem.value = value;
+        if (definition.max_length && definition.max_length > 0) {
+          textareaElem.maxLength = definition.max_length;
+        }
+
+        config[definition.name] = value;
+        textareaElem.addEventListener("input", (e) => {
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(textareaElem, definition, prefixId);
+      }
+
+      function create_select_elem(definition, config, prefixId) {
+        const value = get_initial_value(definition, config);
+
+        const selectElem = document.createElement("select");
+        selectElem.value = value;
+        
+        const options = definition.options || [];
+        options.forEach(o => {
+          const option = document.createElement("option");
+          option.value = o;
+          option.text = o;
+          option.selected = o == value ? "selected" : "";
+          selectElem.appendChild(option);
+        })
+
+        config[definition.name] = value;
+        selectElem.addEventListener("change", (e) => {
+          e.selected = "selected";
+          config[definition.name] = e.target.value;
+          notify_config_change();
+        });
+        
+        return wrap_with_label(selectElem, definition, prefixId);
+      }
+
+      function create_not_supported_elem(definition, config, prefixId) {
+        const labelElem = document.createElement("label");
+        labelElem.innerHTML = "Not supported in browser";
+
+        config[definition.name] = definition.value;
+        return wrap_with_label(labelElem, definition, prefixId);
+      }
+
+      function notify_config_change() {
+        console.log(wallpaperConfig)
+        localStorage.setItem(wallpaperConfigKey, JSON.stringify(wallpaperConfig));
+
+        wallpaper_update_config(JSON.stringify(wallpaperConfig));
+      }
+    </script>
+    <script async type="text/javascript" src="runner.js"></script>
+  </body>
+</html>
