@@ -1,5 +1,0 @@
-/cf-fonts/s/merriweather/5.0.11/cyrillic/900/normal.woff2
-/cf-fonts/s/merriweather/5.0.11/cyrillic-ext/900/normal.woff2
-/cf-fonts/s/merriweather/5.0.11/vietnamese/900/normal.woff2
-/cf-fonts/s/merriweather/5.0.11/latin/900/normal.woff2
-/cf-fonts/s/merriweather/5.0.11/latin-ext/900/normal.woff2
