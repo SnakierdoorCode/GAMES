@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+
+<head>
+<base href="https://cdn.jsdelivr.net/gh/FusionzzzFr/Holy-Moly-Rips@main/Vex/Vex%20X3M%202/">
+<script>
+(function(){
+  var origCreate = document.createElement;
+  document.createElement = function(tag) {
+    var el = origCreate.call(document, tag);
+    if (tag && tag.toLowerCase() === 'script') {
+      var origSrcDesc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+      Object.defineProperty(el, 'src', {
+        configurable: true, enumerable: true,
+        get: function() { return origSrcDesc.get.call(this); },
+        set: function(v) {
+          if (typeof v === 'string' && /gamedistribution\.com/i.test(v)) { console.log('[GD Blocker] Blocked:', v); return; }
+          origSrcDesc.set.call(this, v);
+        }
+      });
+    }
+    return el;
+  };
+  var origFetch = window.fetch;
+  window.fetch = function(url, opts) {
+    if (typeof url === 'string' && /gamedistribution\.com/i.test(url)) return Promise.resolve(new Response('', { status: 200 }));
+    return origFetch.apply(this, arguments);
+  };
+  var origXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(m, url) {
+    if (typeof url === 'string' && /gamedistribution\.com/i.test(url)) return;
+    return origXHROpen.apply(this, arguments);
+  };
+  window.PokiSDK = window.PokiSDK || { init:function(){return Promise.resolve()},commercialBreak:function(){return Promise.resolve()},rewardedBreak:function(){return Promise.resolve()},gameLoadingStart:function(){},gameLoadingFinished:function(){},gameplayStart:function(){},gameplayStop:function(){},happyTime:function(){},displayAd:function(){return Promise.resolve()},destroyAd:function(){},getURLParam:function(){return""} };
+  var gdStub = { init:function(){}, showAd:function(c){if(c)c()}, showReward:function(c){if(c)c()}, SHOW_ADS:false };
+  window.GameDistribution = gdStub;
+  Object.defineProperty(window,'GameDistribution',{configurable:false,enumerable:true,get:function(){return gdStub},set:function(){}});
+  window.adsbygoogle = window.adsbygoogle || [];
+})();
+</script>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="mobile-web-app-capable" content="yes" />
+
+
+    <title>Vex X3M 2</title>
+
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <!-- For apple devices -->
+    <link rel="apple-touch-icon" type="image/png" href="assets/icon.png" />
+    <link rel="stylesheet" href="assets/css/app.css" type="text/css" />
+
+    <script src="azerion-libs.min.js" defer onload="loadGame()"></script>
+
+
+
+
+
+
+
+</head>
+
+<body>
+    <script src="libs/phaser.min.js" defer></script>
+    <script src="libs/box2d-p3.min.js" defer></script>
+
+    <div id="content"> </div>
+    <div id="loader">
+        <div id="loaderR"></div>
+    </div>
+    <div id="orientation"></div>
+
+    <script type="text/javascript">
+        var gameName = "vex-x3m-2.min.js";
+
+
+        //This all here is for cache busting;
+        function addScript(src, buster, callback) {
+            var s = document.createElement('script');
+            s.setAttribute('src', src);
+            if (typeof callback === 'function') {
+                s.onload = callback;
+            }
+            document.body.appendChild(s);
+        }
+
+        function loadGame() {
+
+
+            addScript('version.js', Date.now(), function() {
+
+                addScript(gameName, Date.now(), function() {
+                    new Game();
+                });
+
+            });
+
+
+        }
+    </script>
+</body>
+
+</html>
