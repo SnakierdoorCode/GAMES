@@ -126,12 +126,33 @@ const GODOT_CONFIG = {
 const GODOT_THREADS_ENABLED = false;
 
 (function () {
+	const canvas = document.getElementById('canvas');
 	const statusOverlay = document.getElementById('status');
 	const statusProgress = document.getElementById('status-progress');
 	const statusNotice = document.getElementById('status-notice');
 
 	let initializing = true;
 	let statusMode = '';
+
+	function requestLock() {
+		if (document.pointerLockElement !== canvas && canvas.requestPointerLock) {
+			canvas.requestPointerLock();
+		}
+	}
+
+	// Auto-lock when refocusing the browser tab
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible' && !initializing) {
+			requestLock();
+		}
+	});
+
+	// Backup lock on direct canvas interaction
+	canvas.addEventListener('click', () => {
+		if (!initializing) {
+			requestLock();
+		}
+	});
 
 	function setStatusMode(mode) {
 		if (statusMode === mode || !initializing) {
@@ -271,6 +292,7 @@ const GODOT_THREADS_ENABLED = false;
 			});
 		}).then(() => {
 			setStatusMode('hidden');
+			requestLock();
 		});
 	}).catch(displayFailureNotice);
 }());
