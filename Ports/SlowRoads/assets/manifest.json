@@ -1,0 +1,16 @@
+{
+    "short_name": "Slow Roads",
+    "name": "Slow Roads",
+    "description": "Endless driving zen",
+    "icons": [
+      {
+        "src": "icon.svg",
+        "sizes": "any"
+      }
+    ],
+    "id": "1.0.2",
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#343c3e",
+    "background_color": "#F3F2ED"
+  }
