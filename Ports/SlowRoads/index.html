@@ -3,6 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 
+		<base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@v1/Ports/SlowRoads/" />
+
 		<link rel="icon" href="assets/favicon.svg" />
 		
 		<!-- <link rel="icon" href="./favicon_dark.svg" type="image/x-icon" media="(prefers-color-scheme: dark)"> -->
@@ -385,6 +387,14 @@
 		return k === undefined ? url : U[k];
 	}
 	window.__srA = A;
+	document.addEventListener("click", function (ev) {
+		var a = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
+		if (a && a.getAttribute("href") === "/") {
+			ev.preventDefault();
+			ev.stopImmediatePropagation();
+			location.href = location.href.split("#")[0].split("?")[0];
+		}
+	}, true);
 	var of_ = window.fetch ? window.fetch.bind(window) : null;
 	function b64bytes(du) {
 		var semi = du.indexOf(";");
