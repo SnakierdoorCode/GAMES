@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 
-		<base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@v1/Ports/SlowRoads/" />
+		<base href="https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@v2/Ports/SlowRoads/" />
 
 		<link rel="icon" href="assets/favicon.svg" />
 		
@@ -427,6 +427,12 @@
 		if (!of_) return Promise.resolve(new Response("", { status: 404 }));
 		return of_(input, init).catch(function () { return new Response("", { status: 404 }); });
 	};
+	function ensureCors(el, v) {
+		if (!("crossOrigin" in el)) return;
+		if (typeof v === "string" && v.slice(0, 5) !== "data:" && v.slice(0, 5) !== "blob:" && el.crossOrigin == null) {
+			try { el.crossOrigin = "anonymous"; } catch (e) {}
+		}
+	}
 	function patchSrc(proto) {
 		if (!proto) return;
 		var d = Object.getOwnPropertyDescriptor(proto, "src");
@@ -434,13 +440,14 @@
 		Object.defineProperty(proto, "src", {
 			configurable: d.configurable, enumerable: d.enumerable,
 			get: d.get,
-			set: function (v) { d.set.call(this, typeof v === "string" ? A(v) : v); }
+			set: function (v) { ensureCors(this, v); d.set.call(this, typeof v === "string" ? A(v) : v); }
 		});
 	}
 	patchSrc(window.HTMLImageElement && window.HTMLImageElement.prototype);
 	patchSrc(window.HTMLMediaElement && window.HTMLMediaElement.prototype);
 	var osa = Element.prototype.setAttribute;
 	Element.prototype.setAttribute = function (n, v) {
+		if (n === "src") ensureCors(this, v);
 		return osa.call(this, n, n === "src" ? A(v) : v);
 	};
 	var sty = document.getElementsByTagName("style");
