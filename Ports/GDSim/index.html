@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns='http://www.w3.org/1999/xhtml' lang='' xml:lang=''>
 <head>
+	<base href='https://cdn.jsdelivr.net/gh/SnakierdoorCode/GAMES@main/Ports/GDSim/' />
 	<meta charset='utf-8' />
 	<meta name='viewport' content='width=device-width, user-scalable=no' />
 	<link id='-gd-engine-icon' rel='icon' type='image/png' href='favicon.png' />
@@ -35,10 +36,6 @@
 			box-shadow: 0 0 1px 1px #2f2d35;
 		}
 
-
-		/* Status display
-		 * ============== */
-
 		#status {
 			position: absolute;
 			left: 0;
@@ -48,7 +45,6 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			/* don't consume click events - make children visible explicitly */
 			visibility: hidden;
 		}
 
@@ -134,8 +130,84 @@
 		<div id='status-notice' class='godot' style='display: none;'></div>
 	</div>
 
+	<script>
+	(function () {
+		const splitAssetMap = {
+			'index.pck': ['index.pck.part1', 'index.pck.part2', 'index.pck.part3'],
+		};
+		const originalFetch = window.fetch.bind(window);
+		const gitHubMatch = window.location.href.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/(blob|tree|raw)\/([^/]+)(?:\/(.*))?$/i);
+		let resolvedBase = null;
+
+		if (gitHubMatch) {
+			const [, owner, repo, kind, branch, relPath] = gitHubMatch;
+			const pathParts = (relPath || '').split('/').filter(Boolean);
+			let directoryPath = '';
+
+			if (kind.toLowerCase() === 'tree') {
+				directoryPath = pathParts.join('/');
+			} else if (pathParts.length > 1) {
+				pathParts.pop();
+				directoryPath = pathParts.join('/');
+			}
+
+			resolvedBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${directoryPath ? directoryPath + '/' : ''}`;
+		}
+
+		function resolveAssetUrl(url) {
+			if (!url || /^https?:\/\//i.test(url) || /^data:/i.test(url)) {
+				return url;
+			}
+			if (resolvedBase) {
+				return new URL(url, resolvedBase).toString();
+			}
+			return url;
+		}
+
+		window.fetch = function (resource, init) {
+			const resourceUrl = typeof resource === 'string'
+				? resource
+				: (resource && resource.url) || '';
+			const absoluteUrl = resolveAssetUrl(resourceUrl);
+			const requestUrl = new URL(absoluteUrl, window.location.href);
+			const fileName = decodeURIComponent(requestUrl.pathname.split('/').pop() || '');
+			const chunkNames = splitAssetMap[fileName];
+
+			if (chunkNames) {
+				return Promise.all(chunkNames.map((chunkName) => {
+					const chunkUrl = resolveAssetUrl(chunkName);
+					return originalFetch(chunkUrl, init).then((response) => {
+						if (!response.ok) {
+							throw new Error(`Failed loading split asset '${chunkName}'`);
+						}
+						return response.arrayBuffer();
+					});
+				})).then((buffers) => {
+					const totalLength = buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0);
+					const merged = new Uint8Array(totalLength);
+					let offset = 0;
+					buffers.forEach((buffer) => {
+						merged.set(new Uint8Array(buffer), offset);
+						offset += buffer.byteLength;
+					});
+					const contentType = fileName.endsWith('.pck') ? 'application/octet-stream' : 'application/wasm';
+					return new Response(merged, {
+						status: 200,
+						headers: {
+							'Content-Type': contentType,
+							'Content-Length': String(totalLength),
+						},
+					});
+				});
+			}
+
+			return originalFetch(absoluteUrl, init);
+		};
+	}());
+	</script>
+
 	<script type='text/javascript' src='index.js'></script>
-	<script type='text/javascript'>//<![CDATA[
+	<script type='text/javascript'>
 
 		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":44803696,"index.wasm":18131449},"gdnativeLibs":[]};
 		var engine = new Engine(GODOT_CONFIG);
@@ -225,7 +297,6 @@
 							statusProgressInner.style.width = current/total * 100 + '%';
 							setStatusMode('progress');
 							if (current === total) {
-								// wait for progress bar animation
 								setTimeout(() => {
 									setStatusMode('indeterminate');
 								}, 500);
@@ -240,7 +311,6 @@
 				}, displayFailureNotice);
 			}
 		})();
-	//]]></script>
+	</script>
 </body>
 </html>
-
