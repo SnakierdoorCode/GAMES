@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <base href="https://cdn.jsdelivr.net/gh/eazy-man/shHH@main/unity/ragdoll/">
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    #unity-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<canvas id="unity-canvas" tabindex="-1"></canvas>
+<script src="Build/ragdolls.loader.js"></script>
+<script>
+async function mergeParts(parts) {
+  const responses = await Promise.all(
+    parts.map(url => fetch(url))
+  );
+  for (const response of responses) {
+    if (!response.ok) {
+      throw new Error("Failed to load: " + response.url);
+    }
+  }
+  const buffers = await Promise.all(
+    responses.map(response => response.arrayBuffer())
+  );
+  const totalSize = buffers.reduce(
+    (total, buffer) => total + buffer.byteLength,
+    0
+  );
+  const merged = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const buffer of buffers) {
+    merged.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  }
+  return merged.buffer;
+}
+async function startUnity() {
+  try {
+    console.log("Merging Unity data...");
+    const dataUrl = URL.createObjectURL(
+      new Blob([
+        await mergeParts([
+          "Build/ragdolls.data.part1",
+          "Build/ragdolls.data.part2",
+          "Build/ragdolls.data.part3",
+          "Build/ragdolls.data.part4",
+          "Build/ragdolls.data.part5"
+        ])
+      ])
+    );
+    console.log("Merging Unity WASM...");
+    const wasmUrl = URL.createObjectURL(
+      new Blob([
+        await mergeParts([
+          "Build/ragdolls.wasm.part1",
+          "Build/ragdolls.wasm.part2"
+        ])
+      ], {
+        type: "application/wasm"
+      })
+    );
+    console.log("Starting Unity...");
+    await createUnityInstance(
+      document.querySelector("#unity-canvas"),
+      {
+        dataUrl: dataUrl,
+        frameworkUrl: "Build/ragdolls.framework.js",
+        codeUrl: wasmUrl,
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Jadon Barnes",
+        productName: "Fun with Ragdolls",
+        productVersion: "2.0.3",
+        matchWebGLToCanvasSize: true
+      }
+    );
+  } catch (error) {
+    console.error("Unity failed to start:", error);
+  }
+}
+startUnity();
+</script>
+</body>
+</html>
