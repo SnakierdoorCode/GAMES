@@ -784,7 +784,7 @@ function E2() {
   async function o4() {
     clearTimeout(n9);
     try {
-      const r4 = await fetch(`${m2}/_app/version.json`, { headers: { pragma: "no-cache", "cache-control": "no-cache" } });
+      const r4 = await fetch(`${m2}/_app/version.json`, { cache: "no-store" });
       if (!r4.ok) return false;
       const a3 = (await r4.json()).version !== w2;
       return a3 && (e10(true), clearTimeout(n9)), a3;
@@ -57485,7 +57485,6 @@ var fe5 = { handleError: ({ error: o4 }) => {
   console.error(o4);
 } };
 
-// ../../../../Temp/opencode/slowroads-single/entry.js
 var element = document.querySelector("body > div") || document.body;
 Nt(app_cd6c9107_exports, element);
 /**
